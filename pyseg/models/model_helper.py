@@ -5,6 +5,7 @@ import importlib
 from .decoder_contrast import Aux_Module
 
 
+
 class ModelBuilder(nn.Module):
     def __init__(self, net_cfg):
         super(ModelBuilder, self).__init__()

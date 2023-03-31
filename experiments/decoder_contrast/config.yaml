@@ -1,8 +1,8 @@
 dataset: # Required.
   type: cityscapes
   train:
-    data_root: /path/to/cityscapes
-    data_list: /path/to/cityscapes/fine_train.txt
+    data_root: ../../../../input/cityscapes/Cityscape
+    data_list: ./cityscapes/train.lst
     flip: True
     GaussianBlur: False
     rand_resize: [0.5, 2.0]
@@ -11,8 +11,8 @@ dataset: # Required.
       type: rand
       size: [769, 769] # crop image with HxW size
   val:
-    data_root: /path/to/cityscapes
-    data_list: /path/to/cityscapes/fine_val.txt
+    data_root: ../../../../input/cityscapes/Cityscape
+    data_list: ./cityscapes/val.lst
     crop:
       type: center
       size: [769, 769] # crop image with HxW size

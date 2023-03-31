@@ -8,7 +8,7 @@ __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
 model_urls = {
     'resnet18': '/path/to/model_zoo/resnet18-5c106cde.pth',
     'resnet34': '/path/to/model_zoo/resnet34-333f7ec4.pth',
-    'resnet50': '/path/to/model_zoo/resnet50-ebb6acbb.pth',
+    'resnet50': '../../../../input/pre-trained/resnet50_imagenet.pth',
     'resnet101': '/path/to/model_zoo/resnet101-2a57e44d.pth',
     'resnet152': '/path/to/model_zoo/resnet152-0d43d698.pth',
 }
@@ -116,7 +116,7 @@ class ResNet(nn.Module):
         norm_layer = get_syncbn() if sync_bn else nn.BatchNorm2d
         self._norm_layer = norm_layer
 
-        self.inplanes = 128
+        self.inplanes = 64
         self.dilation = 1
 
         if replace_stride_with_dilation is None:
@@ -266,7 +266,10 @@ def resnet50(pretrained=True, **kwargs):
     """
     model = ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
     if pretrained:
-        model.load_state_dict(torch.load(model_urls['resnet50'],map_location="cpu"), strict=False)
+        missing_keys, unexpected_keys = model.load_state_dict(torch.load(model_urls['resnet50'],map_location="cpu"), strict=False)
+        if len(missing_keys) != 0 or len(unexpected_keys) != 0:
+            print("missing_keys: ", missing_keys)
+            print("unexpected_keys: ", unexpected_keys)
     return model
 
 def resnet50c(pretrained=False, **kwargs):
