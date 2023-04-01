@@ -45,7 +45,8 @@ class city_dset(BaseDataset):
         else:
             for k, v in self.label_mapping.items():
                 label[temp == k] = v
-        
+
+        label = Image.fromarray(label)
         return label
     
 
