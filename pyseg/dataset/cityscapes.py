@@ -36,8 +36,8 @@ class city_dset(BaseDataset):
                               31: 16, 32: 17, 33: 18}
 
     def convert_label(self, label, inverse=False):
-        label = np.asarray(label)
-        label.flags.writeable = True
+        label = np.array(label)
+        # label.flags.writeable = True
         temp = label.copy()
         if inverse:
             for v, k in self.label_mapping.items():
