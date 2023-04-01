@@ -13,7 +13,7 @@ class BaseDataset(Dataset):
     def parse_input_list(self, d_list, max_sample=-1, start_idx=-1, end_idx=-1):
         logger = logging.getLogger('global')
         assert isinstance(d_list, str)
-        self.list_sample = [line.strip().split(" ") for line in open(d_list, 'r')]
+        self.list_sample = [line.strip().split("	") for line in open(d_list, 'r')]
 
         if max_sample > 0:
             self.list_sample = self.list_sample[0:max_sample]

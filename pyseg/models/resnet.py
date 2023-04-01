@@ -8,7 +8,7 @@ __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
 model_urls = {
     'resnet18': '/path/to/model_zoo/resnet18-5c106cde.pth',
     'resnet34': '/path/to/model_zoo/resnet34-333f7ec4.pth',
-    'resnet50': '../../../../input/pre-trained/resnet50_imagenet.pth',
+    'resnet50': '../../../../input/pre-trained/resnet50-imagenet.pth',
     'resnet101': '/path/to/model_zoo/resnet101-2a57e44d.pth',
     'resnet152': '/path/to/model_zoo/resnet152-0d43d698.pth',
 }
