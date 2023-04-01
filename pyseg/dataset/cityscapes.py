@@ -36,8 +36,6 @@ class city_dset(BaseDataset):
                               31: 16, 32: 17, 33: 18}
 
     def convert_label(self, label, inverse=False):
-        label = np.array(label)
-        # label.flags.writeable = True
         temp = label.copy()
         if inverse:
             for v, k in self.label_mapping.items():
@@ -45,8 +43,6 @@ class city_dset(BaseDataset):
         else:
             for k, v in self.label_mapping.items():
                 label[temp == k] = v
-        
-        label = Image.fromarray(label.astype('uint8')).convert('RGB')
         
         return label
     
