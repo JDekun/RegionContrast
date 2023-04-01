@@ -3,6 +3,8 @@ import os.path
 import numpy as np
 import copy
 
+from PIL import Image
+
 import torch
 from torch.utils.data import Dataset
 from torchvision import transforms
@@ -42,6 +44,9 @@ class city_dset(BaseDataset):
         else:
             for k, v in self.label_mapping.items():
                 label[temp == k] = v
+        
+        label = Image.fromarray(label.astype('uint8')).convert('RGB')
+        
         return label
     
 
