@@ -144,7 +144,9 @@ def train(model, optimizer, lr_scheduler, criterion, data_loader, epoch):
 
         preds = model(images)
         contrast_loss = preds[-1] / world_size
-        loss = criterion(preds[:-1], labels) / world_size
+        print(labels.shape)
+        print(preds[0].shape)
+        loss = criterion(preds[0], labels) / world_size
         loss += cfg['criterion']['contrast_weight']*contrast_loss
         optimizer.zero_grad()
         loss.backward()
