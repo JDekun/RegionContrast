@@ -3,7 +3,7 @@ now=$(date +"%Y%m%d_%H%M%S")
 PARTITION=$1
 JOB_NAME=$2
 ROOT=../..
-export CUDA_VISIBLE_DEVICES=0
+export CUDA_VISIBLE_DEVICES=6
 export PYTHONPATH=$ROOT:$PYTHONPATH
 
 
