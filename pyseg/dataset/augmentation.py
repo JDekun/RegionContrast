@@ -38,7 +38,7 @@ class ToTensor(object):
     # Converts a PIL Image or numpy.ndarray (H x W x C) to a torch.FloatTensor of shape (1 x C x H x W).
     def __call__(self, image, label):
         if isinstance(image, Image.Image) and isinstance(label, Image.Image):
-            image = np.asarray(image)
+            image = np.asarray(image).copy()
             label = np.asarray(label)
         elif not isinstance(image, np.ndarray) or not isinstance(label, np.ndarray):
             raise (RuntimeError("segtransforms.ToTensor() only handle PIL Image and np.ndarray"

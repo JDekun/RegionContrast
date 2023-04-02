@@ -16,8 +16,8 @@ dataset: # Required.
     crop:
       type: center
       size: [769, 769] # crop image with HxW size
-  batch_size: 1
-  workers: 2
+  batch_size: 2
+  workers: 4
   mean: [123.675, 116.28, 103.53]
   std: [58.395, 57.12, 57.375]
   ignore_label: 255
