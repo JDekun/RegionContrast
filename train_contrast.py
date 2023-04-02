@@ -27,6 +27,7 @@ parser.add_argument("--local_rank", type=int, default=0)
 parser.add_argument("--save_dir", type=str, default="default")
 parser.add_argument('--batch_size', default=2, type=int)
 parser.add_argument('--batch_size_val', default=2, type=int)
+parser.add_argument('--epochs', default=100, type=int)
 
 logger =init_log('global', logging.INFO)
 logger.propagate = 0
@@ -39,6 +40,7 @@ def main():
     cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
 
     cfg['dataset'].update({'batch_size': args.batch_size, 'batch_size_val': args.batch_size_val})
+    cfg['trainer'].update({'epochs': args.epochs})
     
     cudnn.enabled = True
     cudnn.benchmark = True
@@ -259,6 +261,9 @@ def validate(model, data_loader, epoch):
         intersection_meter.update(reduced_intersection.cpu().numpy())
         union_meter.update(reduced_union.cpu().numpy())
         target_meter.update(reduced_target.cpu().numpy())
+
+        if step % 5 == 0 and rank==0:
+            logger.info('iter = {} of {} completed'.format(step, len(data_loader)))
 
     iou_class = intersection_meter.sum / (union_meter.sum + 1e-10)
     accuracy_class = intersection_meter.sum / (target_meter.sum + 1e-10)
