@@ -135,14 +135,16 @@ class ResNet(nn.Module):
         self.downsample_before_x4 = downsample_before_x4
         if self.downsample_before_x1 or self.downsample_before_x4:
             self.downsample = nn.AvgPool2d(kernel_size=3, stride=2)
-        self.conv1 = nn.Sequential(
-            conv3x3(3, 64, stride=2),
-            norm_layer(64),
-            nn.ReLU(inplace=True),
-            conv3x3(64, 64),
-            norm_layer(64),
-            nn.ReLU(inplace=True),
-            conv3x3(64, self.inplanes))
+        # self.conv1 = nn.Sequential(
+        #     conv3x3(3, 64, stride=2),
+        #     norm_layer(64),
+        #     nn.ReLU(inplace=True),
+        #     conv3x3(64, 64),
+        #     norm_layer(64),
+        #     nn.ReLU(inplace=True),
+        #     conv3x3(64, self.inplanes))
+        self.conv1 =nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3,
+                               bias=False)
         self.bn1 = norm_layer(self.inplanes)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1, ceil_mode=True)  # change
