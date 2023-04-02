@@ -8,6 +8,6 @@ export PYTHONPATH=$ROOT:$PYTHONPATH
 
 
 python -m torch.distributed.launch --nproc_per_node=4 --master_port 29523 ../../train_contrast.py --config=config.yaml  2>&1 | tee log_$now.log
-mkdir -p checkpoints/result
-python ../../eval.py --base_size=512 --scales 1.0 --config=config.yaml --model_path=checkpoints/best.pth --save_folder=checkpoints/result/ 2>&1 | tee checkpoints/result/eva_$now.log
-python ../../eval.py --base_size=512 --scales 1.0 --config=config.yaml --model_path=checkpoints/epoch_99.pth --save_folder=checkpoints/result/ 2>&1 | tee checkpoints/result/eva_99_$now.log
+# mkdir -p checkpoints/result
+# python ../../eval.py --base_size=512 --scales 1.0 --config=config.yaml --model_path=checkpoints/best.pth --save_folder=checkpoints/result/ 2>&1 | tee checkpoints/result/eva_$now.log
+# python ../../eval.py --base_size=512 --scales 1.0 --config=config.yaml --model_path=checkpoints/epoch_99.pth --save_folder=checkpoints/result/ 2>&1 | tee checkpoints/result/eva_99_$now.log

@@ -14,6 +14,8 @@ from . import augmentation as psp_trsform
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 
+from pyseg.utils.utils import get_world_size
+
 
 class city_dset(BaseDataset):
     def __init__(self, data_root, data_list, trs_form):
@@ -94,7 +96,7 @@ def build_cityloader(split, all_cfg):
     cfg = copy.deepcopy(cfg_dset)
     cfg.update(cfg.get(split, {}))
 
-    workers = cfg.get('workers', 2)
+    workers = get_world_size()
     batch_size = cfg.get('batch_size', 1)
     # build transform
     trs_form = build_transfrom(cfg)

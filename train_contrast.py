@@ -23,6 +23,9 @@ parser = argparse.ArgumentParser(description="Pytorch Semantic Segmentation")
 parser.add_argument("--config", type=str, default="config.yaml")
 parser.add_argument('--seed', type=int, default=123, help='random seed')
 parser.add_argument("--local_rank", type=int, default=0)
+
+parser.add_argument("--save_dir", type=str, default="default")
+
 logger =init_log('global', logging.INFO)
 logger.propagate = 0
 
@@ -53,8 +56,20 @@ def main():
         print('set random seed to',args.seed)
         set_random_seed(args.seed)
 
-    if not osp.exists(cfg['saver']['snapshot_dir']) and rank == 0:
-        os.makedirs(cfg['saver']['snapshot_dir'])
+    save_dir = cfg['saver']['snapshot_dir'] +"/" + args.save_dir
+
+    if not osp.exists(save_dir) and rank == 0:
+        os.makedirs(save_dir)
+
+    # 保存mIOU
+    results_csv = save_dir + "/metadata.csv"
+    if rank == 0:
+        # write into csv
+        with open(results_csv, "a") as f:
+            # 记录每个epoch对应的train_loss、lr以及验证集各指标
+            train_info = f"epoch,mIOU\n" 
+            f.write(train_info)
+
     # Create network.
     model = ModelBuilder(cfg['net'])
     modules_back = [model.encoder]
@@ -101,23 +116,29 @@ def main():
         train(model, optimizer, lr_scheduler, criterion, trainloader, epoch)
         # Validataion
         if cfg_trainer["eval_on"]:
-            if rank ==0:
-                logger.info("start evaluation")
+            # if rank == 0:
+            #     logger.info("start evaluation")
             prec = validate(model, valloader, epoch)
+            if rank == 0:
+                # write into txt
+                with open(results_csv, "a") as f:
+                    # 记录每个epoch对应的train_loss、lr以及验证集各指标
+                    train_info = f"{epoch},{prec}\n" 
+                    f.write(train_info)
             if rank == 0:
                 if prec > best_prec:
                     best_prec = prec
                     state = {'epoch': epoch,
                          'model_state': model.state_dict(),
                          'optimizer_state': optimizer.state_dict()}
-                    torch.save(state, osp.join(cfg['saver']['snapshot_dir'], 'best.pth'))
-                    logger.info('Currently, the best val result is: {}'.format(best_prec))
+                    torch.save(state, osp.join(save_dir, 'best.pth'))
+                    logger.info('the best val result is: {}'.format(best_prec))
         # note we also save the last epoch checkpoint
         if epoch == (cfg_trainer['epochs'] - 1) and rank == 0:
             state = {'epoch': epoch,
                      'model_state': model.state_dict(),
                      'optimizer_state': optimizer.state_dict()}
-            torch.save(state, osp.join(cfg['saver']['snapshot_dir'], 'epoch_' + str(epoch) + '.pth'))
+            torch.save(state, osp.join(save_dir, 'epoch_' + str(epoch) + '.pth'))
             logger.info('Save Checkpoint {}'.format(epoch))
     
 
@@ -132,6 +153,9 @@ def train(model, optimizer, lr_scheduler, criterion, data_loader, epoch):
     intersection_meter = AverageMeter()
     union_meter = AverageMeter()
     target_meter = AverageMeter()
+
+    # if rank == 0:
+    #     logger.info('=========epoch[{}]=========,Train'.format(epoch))
 
     for step, batch in enumerate(data_loader):
         i_iter = epoch * len(data_loader) + step
@@ -150,26 +174,26 @@ def train(model, optimizer, lr_scheduler, criterion, data_loader, epoch):
         loss.backward()
         optimizer.step()
 
-        # get the output produced by model
-        output = preds[0] if cfg['net'].get('aux_loss', False) else preds
-        output = output.data.max(1)[1].cpu().numpy()
-        target = labels.cpu().numpy()
+        # # get the output produced by model
+        # output = preds[0] if cfg['net'].get('aux_loss', False) else preds
+        # output = output.data.max(1)[1].cpu().numpy()
+        # target = labels.cpu().numpy()
        
-        # alculate miou
-        intersection, union, target = intersectionAndUnion(output, target, num_classes, ignore_label)
+        # # start to calculate miou
+        # intersection, union, target = intersectionAndUnion(output, target, num_classes, ignore_label)
 
-        # gather all validation information
-        reduced_intersection = torch.from_numpy(intersection).cuda()
-        reduced_union = torch.from_numpy(union).cuda()
-        reduced_target = torch.from_numpy(target).cuda()
+        # # gather all validation information
+        # reduced_intersection = torch.from_numpy(intersection).cuda()
+        # reduced_union = torch.from_numpy(union).cuda()
+        # reduced_target = torch.from_numpy(target).cuda()
 
-        dist.all_reduce(reduced_intersection)
-        dist.all_reduce(reduced_union)
-        dist.all_reduce(reduced_target)
+        # dist.all_reduce(reduced_intersection)
+        # dist.all_reduce(reduced_union)
+        # dist.all_reduce(reduced_target)
 
-        intersection_meter.update(reduced_intersection.cpu().numpy())
-        union_meter.update(reduced_union.cpu().numpy())
-        target_meter.update(reduced_target.cpu().numpy())
+        # intersection_meter.update(reduced_intersection.cpu().numpy())
+        # union_meter.update(reduced_union.cpu().numpy())
+        # target_meter.update(reduced_target.cpu().numpy())
 
         # gather all loss from different gpus
         reduced_loss = loss.clone()
@@ -178,18 +202,18 @@ def train(model, optimizer, lr_scheduler, criterion, data_loader, epoch):
         losses.update(reduced_loss.item())
 
         if i_iter % 50 == 0 and rank==0:
-            iou_class = intersection_meter.sum / (union_meter.sum + 1e-10)
-            accuracy_class = intersection_meter.sum / (target_meter.sum + 1e-10)
-            mIoU = np.mean(iou_class)
-            mAcc = np.mean(accuracy_class)
-            logger.info('iter = {} of {} completed, LR = {} loss = {}, mIoU = {}'
-                        .format(i_iter, cfg['trainer']['epochs']*len(data_loader), lr, losses.avg, mIoU))
+            # iou_class = intersection_meter.sum / (union_meter.sum + 1e-10)
+            # accuracy_class = intersection_meter.sum / (target_meter.sum + 1e-10)
+            # mIoU = np.mean(iou_class)
+            # mAcc = np.mean(accuracy_class)
+            logger.info('iter = {} of {} completed, LR = {} loss = {}'
+                        .format(i_iter, cfg['trainer']['epochs']*len(data_loader), lr, losses.avg))
 
-    iou_class = intersection_meter.sum / (union_meter.sum + 1e-10)
-    accuracy_class = intersection_meter.sum / (target_meter.sum + 1e-10)
-    mIoU = np.mean(iou_class)
-    if rank == 0:
-        logger.info('=========epoch[{}]=========,Train mIoU = {}'.format(epoch, mIoU))
+    # iou_class = intersection_meter.sum / (union_meter.sum + 1e-10)
+    # accuracy_class = intersection_meter.sum / (target_meter.sum + 1e-10)
+    # mIoU = np.mean(iou_class)
+    # if rank == 0:
+    #     logger.info('=========epoch[{}]=========,Train'.format(epoch))
 
 
 def validate(model, data_loader, epoch):
@@ -235,11 +259,13 @@ def validate(model, data_loader, epoch):
     iou_class = intersection_meter.sum / (union_meter.sum + 1e-10)
     accuracy_class = intersection_meter.sum / (target_meter.sum + 1e-10)
     mIoU = np.mean(iou_class)
+    accuracy_class = np.mean(accuracy_class)
     
-    print(mIoU)
+    # print(mIoU)
     if rank == 0:
-        logger.info('=========epoch[{}]=========,Val mIoU = {}'.format(epoch, mIoU))
-    torch.save(mIoU, 'eval_metric.pth.tar')
+        logger.info('=========epoch[{}]=========,Val'.format(epoch))
+        logger.info('accuracy = {} mIoU = {}'.format(accuracy_class, mIoU))
+    # torch.save(mIoU, 'eval_metric.pth.tar')
     return mIoU
 
 

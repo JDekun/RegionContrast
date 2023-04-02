@@ -39,7 +39,7 @@ class ToTensor(object):
     def __call__(self, image, label):
         if isinstance(image, Image.Image) and isinstance(label, Image.Image):
             image = np.asarray(image).copy()
-            label = np.asarray(label)
+            label = np.asarray(label).copy()
         elif not isinstance(image, np.ndarray) or not isinstance(label, np.ndarray):
             raise (RuntimeError("segtransforms.ToTensor() only handle PIL Image and np.ndarray"
                    "[eg: data readed by PIL.Image.open()].\n"))

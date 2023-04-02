@@ -91,7 +91,7 @@ def main():
     data_root, f_data_list = cfg_dset['val']['data_root'], cfg_dset['val']['data_list']
     data_list = []
     for line in open(f_data_list, 'r'):
-        arr = line.strip().split(" ")
+        arr = line.strip().split("	")
         arr = [os.path.join(data_root, item) for item in arr]
         if resize2:
             imp = arr[0].replace('leftImg8bit','leftImg8bit_2')
