@@ -28,6 +28,7 @@ parser.add_argument("--save_dir", type=str, default="default")
 parser.add_argument('--batch_size', default=2, type=int)
 parser.add_argument('--batch_size_val', default=2, type=int)
 parser.add_argument('--epochs', default=100, type=int)
+parser.add_argument("--amp",dest="amp",action="store_true")
 
 logger =init_log('global', logging.INFO)
 logger.propagate = 0
@@ -76,6 +77,9 @@ def main():
             train_info = f"epoch,mIOU\n" 
             f.write(train_info)
 
+    # amp设置
+    scaler = torch.cuda.amp.GradScaler() if args.amp else None
+
     # Create network.
     model = ModelBuilder(cfg['net'])
     modules_back = [model.encoder]
@@ -119,7 +123,7 @@ def main():
     best_prec = 0
     for epoch in range(cfg_trainer['epochs']):
         # Training
-        train(model, optimizer, lr_scheduler, criterion, trainloader, epoch)
+        train(model, optimizer, lr_scheduler, criterion, trainloader, epoch, scaler)
         # Validataion
         if cfg_trainer["eval_on"]:
             # if rank == 0:
@@ -137,8 +141,10 @@ def main():
                     state = {'epoch': epoch,
                          'model_state': model.state_dict(),
                          'optimizer_state': optimizer.state_dict()}
+                    if args.amp:
+                        state["scaler"] = scaler.state_dict()
                     torch.save(state, osp.join(save_dir, 'best.pth'))
-                    logger.info('the best val result is: {}'.format(best_prec))
+                logger.info('the best val result is: {}'.format(best_prec))
         # note we also save the last epoch checkpoint
         if epoch == (cfg_trainer['epochs'] - 1) and rank == 0:
             state = {'epoch': epoch,
@@ -149,7 +155,7 @@ def main():
     
 
 
-def train(model, optimizer, lr_scheduler, criterion, data_loader, epoch):
+def train(model, optimizer, lr_scheduler, criterion, data_loader, epoch, scaler):
     model.train()
     data_loader.sampler.set_epoch(epoch)
     num_classes, ignore_label = cfg['net']['num_classes'], cfg['dataset']['ignore_label']
@@ -172,13 +178,20 @@ def train(model, optimizer, lr_scheduler, criterion, data_loader, epoch):
         images = images.cuda()
         labels = labels.long().cuda()
 
-        preds = model(images, is_eval=False)
-        contrast_loss = preds[-1] / world_size
-        loss = criterion(preds[:-1], labels) / world_size
-        loss += cfg['criterion']['contrast_weight']*contrast_loss
+        with torch.cuda.amp.autocast(enabled=scaler is not None):
+            preds = model(images, is_eval=False)
+            contrast_loss = preds[-1] / world_size
+            loss = criterion(preds[:-1], labels) / world_size
+            loss += cfg['criterion']['contrast_weight']*contrast_loss
+            
         optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+        if scaler is not None:
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
+        else:
+            loss.backward()
+            optimizer.step()
 
         # # get the output produced by model
         # output = preds[0] if cfg['net'].get('aux_loss', False) else preds
