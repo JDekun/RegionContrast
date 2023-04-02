@@ -41,31 +41,40 @@ class ModelBuilder(nn.Module):
         cls = getattr(module, class_name)
         return cls(**kwargs)
 
-    def forward(self, x, infer=False):
+    def forward(self, x, infer=False, is_eval=False):
         n, c, h, w = x.size()
         if self._use_auxloss:
             if self.fpn and infer:
                 f1, f2, feat1, feat2 = self.encoder(x)
-                pred_head = self.decoder([f1, f2,feat1, feat2], infer=True)
+                pred_head = self.decoder([f1, f2,feat1, feat2], infer=True, is_eval = is_eval)
             elif self.fpn:
                 # feat1 used as dsn loss as default, f1 is layer2's output as default
                 f1, f2, feat1, feat2 = self.encoder(x)
-                pred_head = self.decoder([f1, f2,feat1, feat2])
+                pred_head = self.decoder([f1, f2,feat1, feat2], is_eval = is_eval)
             else:
                 feat1, feat2 = self.encoder(x)
-                pred_head = self.decoder(feat2)
+                pred_head = self.decoder(feat2, is_eval = is_eval)
 
-            pred_aux = self.auxor(feat1)
-            pred_aux = F.upsample(input=pred_aux, size=(h, w), mode='bilinear', align_corners=True)
+            if not is_eval:
+                pred_aux = self.auxor(feat1)
+                pred_aux = F.upsample(input=pred_aux, size=(h, w), mode='bilinear', align_corners=True)
             
             if self.contrast:
-                res, contrast_loss = pred_head
-                res = F.upsample(input=res, size=(h, w), mode='bilinear', align_corners=True)
-                #fea = F.upsample(input=fea, size=(h, w), mode='bilinear', align_corners=True)
-                return [res, pred_aux, contrast_loss]
+                if not is_eval:
+                    res, contrast_loss = pred_head
+                    res = F.upsample(input=res, size=(h, w), mode='bilinear', align_corners=True)
+                    return [res, pred_aux, contrast_loss]
+                else:
+                    res = pred_head
+                    res = F.upsample(input=res, size=(h, w), mode='bilinear', align_corners=True)
+                    #fea = F.upsample(input=fea, size=(h, w), mode='bilinear', align_corners=True)
+                    return [res]            
             else:
                 pred_head = F.upsample(input=pred_head, size=(h, w), mode='bilinear', align_corners=True)
-                return [pred_head, pred_aux]
+                if not is_eval:
+                    return [pred_head, pred_aux]
+                else:
+                    return [pred_head]
         else:
             feat = self.encoder(x)
             pred_head = self.decoder(feat)
