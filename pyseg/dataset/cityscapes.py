@@ -97,7 +97,11 @@ def build_cityloader(split, all_cfg):
     cfg.update(cfg.get(split, {}))
 
     workers = get_world_size()
-    batch_size = cfg.get('batch_size', 1)
+    if split == "train":
+        batch_size = cfg.get('batch_size', 1)
+    elif split == "val":
+        batch_size = cfg.get('batch_size_val', 1)
+        
     # build transform
     trs_form = build_transfrom(cfg)
     dset = city_dset(cfg['data_root'], cfg['data_list'], trs_form)
@@ -106,6 +110,6 @@ def build_cityloader(split, all_cfg):
     sample = DistributedSampler(dset)
 
     loader = DataLoader(dset, batch_size=batch_size, num_workers=workers,
-                        sampler=sample, shuffle=False, pin_memory=False)
+                        sampler=sample, shuffle=False, pin_memory=True)
     
     return loader

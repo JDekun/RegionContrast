@@ -25,6 +25,8 @@ parser.add_argument('--seed', type=int, default=123, help='random seed')
 parser.add_argument("--local_rank", type=int, default=0)
 
 parser.add_argument("--save_dir", type=str, default="default")
+parser.add_argument('--batch_size', default=2, type=int)
+parser.add_argument('--batch_size_val', default=2, type=int)
 
 logger =init_log('global', logging.INFO)
 logger.propagate = 0
@@ -35,6 +37,8 @@ def main():
     args = parser.parse_args()
 
     cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
+
+    cfg['dataset'].update({'batch_size': args.batch_size, 'batch_size_val': args.batch_size_val})
     
     cudnn.enabled = True
     cudnn.benchmark = True
@@ -166,7 +170,7 @@ def train(model, optimizer, lr_scheduler, criterion, data_loader, epoch):
         images = images.cuda()
         labels = labels.long().cuda()
 
-        preds = model(images)
+        preds = model(images, is_eval=False)
         contrast_loss = preds[-1] / world_size
         loss = criterion(preds[:-1], labels) / world_size
         loss += cfg['criterion']['contrast_weight']*contrast_loss
@@ -233,7 +237,7 @@ def validate(model, data_loader, epoch):
         images = images.cuda()
         labels = labels.long().cuda()
         with torch.no_grad():
-            preds = model(images)
+            preds = model(images,  is_eval=True)
            
         # get the output produced by model
         output = preds[0] if cfg['net'].get('aux_loss', False) else preds

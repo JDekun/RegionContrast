@@ -17,6 +17,7 @@ dataset: # Required.
       type: center
       size: [769, 769] # crop image with HxW size
   batch_size: 2
+  batch_size_val: 2
   workers: 1
   mean: [123.675, 116.28, 103.53]
   std: [58.395, 57.12, 57.375]
