@@ -52,12 +52,11 @@ class dec_deeplabv3_contrast(nn.Module):
         return new_fea, val.cuda()
 
     def _compute_contrast_loss(self, l_pos, l_neg):
-        print(l_pos.shape)
-        print(l_neg.shape)
         N = l_pos.size(0)
         logits = torch.cat((l_pos,l_neg),dim=1)
         logits /= self.temperature
         labels = torch.zeros((N,),dtype=torch.long).cuda()
+        print(logits)
         return self.criterion(logits,labels)
     
 
