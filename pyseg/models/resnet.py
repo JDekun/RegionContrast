@@ -157,6 +157,8 @@ class ResNet(nn.Module):
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2,
                                        dilate=replace_stride_with_dilation[2],
                                        multi_grid=multi_grid)
+        
+        print(self.dilation)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -185,8 +187,6 @@ class ResNet(nn.Module):
         norm_layer = self._norm_layer
         downsample = None
         previous_dilation = self.dilation
-        if blocks == 3:
-            print(self.dilation)
         if dilate:
             self.dilation *= stride
             stride = 1
