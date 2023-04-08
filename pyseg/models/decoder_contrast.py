@@ -44,8 +44,6 @@ class dec_deeplabv3_contrast(nn.Module):
         fea = fea.view(bs, 256,-1).permute(1,0,2) 
     
         new_fea = fea[:,pred==val[0]].mean(1).unsqueeze(0) 
-        print(pred==val[0])
-
         for i in val[1:]:
             if(i<19):
                 class_fea = fea[:,pred==i].mean(1).unsqueeze(0)   
@@ -76,6 +74,7 @@ class dec_deeplabv3_contrast(nn.Module):
                 if cls_ind in vals:
                     query = keys[list(vals).index(cls_ind)]   #256,
                     l_pos = query.unsqueeze(1)*eval("self.queue"+str(cls_ind)).clone().detach()  #256, N1
+                    print(l_pos.shape)
                     all_ind = [m for m in range(19)]
                     l_neg = 0
                     tmp = all_ind.copy()
