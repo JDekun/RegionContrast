@@ -41,10 +41,12 @@ class dec_deeplabv3_contrast(nn.Module):
         pred = pred.max(1)[1].squeeze().view(bs, -1)  
         val = torch.unique(pred)
         fea=fea.squeeze()
-        fea = fea.view(bs, 256,-1).permute(1,0,2)
-        print(fea.shape) 
+        fea = fea.view(bs, 256,-1).permute(1,0,2) 
     
         new_fea = fea[:,pred==val[0]].mean(1).unsqueeze(0) 
+        print(new_fea.shape)
+        print(fea[:,pred==val[0]].shape)
+
         for i in val[1:]:
             if(i<19):
                 class_fea = fea[:,pred==i].mean(1).unsqueeze(0)   
