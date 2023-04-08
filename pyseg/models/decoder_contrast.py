@@ -67,6 +67,7 @@ class dec_deeplabv3_contrast(nn.Module):
         if not is_eval:
             bs = x.shape[0]
             keys, vals = self.construct_region(fea, res)  #keys: N,256   vals: N,  N is the category number in this batch
+            print(keys.shape)
             keys = nn.functional.normalize(keys,dim=1)
             contrast_loss = 0
 
