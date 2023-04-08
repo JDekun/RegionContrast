@@ -2,7 +2,7 @@
 import torch.nn as nn
 from torch.nn import functional as F
 import importlib
-from .decoder_contrast import Aux_Module
+from .base import Aux_Module
 
 
 

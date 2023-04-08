@@ -41,7 +41,8 @@ class dec_deeplabv3_contrast(nn.Module):
         pred = pred.max(1)[1].squeeze().view(bs, -1)  
         val = torch.unique(pred)
         fea=fea.squeeze()
-        fea = fea.view(bs, 256,-1).permute(1,0,2)   
+        fea = fea.view(bs, 256,-1).permute(1,0,2)
+        print(fea.shape) 
     
         new_fea = fea[:,pred==val[0]].mean(1).unsqueeze(0) 
         for i in val[1:]:
@@ -57,6 +58,7 @@ class dec_deeplabv3_contrast(nn.Module):
         logits /= self.temperature
         labels = torch.zeros((N,),dtype=torch.long).cuda()
         return self.criterion(logits,labels)
+    
 
     def forward(self, x, is_eval = False):
      
@@ -85,21 +87,4 @@ class dec_deeplabv3_contrast(nn.Module):
             for i in range(self.num_classes):
                 self._dequeue_and_enqueue(keys,vals,i, bs)
             return res, contrast_loss
-        return res
-
-
-class Aux_Module(nn.Module):
-    def __init__(self, in_planes, num_classes=19, sync_bn=False):
-        super(Aux_Module, self).__init__()
-
-        norm_layer = get_syncbn() if sync_bn else nn.BatchNorm2d
-        self.aux = nn.Sequential(
-                nn.Conv2d(in_planes, 256, kernel_size=3, stride=1, padding=1),
-                norm_layer(256),
-                nn.ReLU(inplace=True),
-                nn.Dropout2d(0.1),
-                nn.Conv2d(256, num_classes, kernel_size=1, stride=1, padding=0, bias=True))
-
-    def forward(self, x):
-        res = self.aux(x)
         return res

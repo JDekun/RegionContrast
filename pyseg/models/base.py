@@ -51,4 +51,18 @@ class ASPP(nn.Module):
         aspp_out = torch.cat((feat1, feat2, feat3, feat4, feat5), 1)
         return aspp_out
 
+class Aux_Module(nn.Module):
+    def __init__(self, in_planes, num_classes=19, sync_bn=False):
+        super(Aux_Module, self).__init__()
 
+        norm_layer = get_syncbn() if sync_bn else nn.BatchNorm2d
+        self.aux = nn.Sequential(
+                nn.Conv2d(in_planes, 256, kernel_size=3, stride=1, padding=1),
+                norm_layer(256),
+                nn.ReLU(inplace=True),
+                nn.Dropout2d(0.1),
+                nn.Conv2d(256, num_classes, kernel_size=1, stride=1, padding=0, bias=True))
+
+    def forward(self, x):
+        res = self.aux(x)
+        return res
