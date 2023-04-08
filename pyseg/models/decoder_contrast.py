@@ -46,6 +46,7 @@ class dec_deeplabv3_contrast(nn.Module):
         new_fea = fea[:,pred==val[0]].mean(1).unsqueeze(0) 
         print(new_fea.shape)
         print(fea[:,pred==val[0]].shape)
+        print(fea[:,pred==val[0]].mean(1).shape)
 
         for i in val[1:]:
             if(i<19):
