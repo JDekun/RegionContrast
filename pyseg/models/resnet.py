@@ -157,8 +157,6 @@ class ResNet(nn.Module):
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2,
                                        dilate=replace_stride_with_dilation[2],
                                        multi_grid=multi_grid)
-        
-        print(self.dilation)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -188,7 +186,7 @@ class ResNet(nn.Module):
         downsample = None
         previous_dilation = self.dilation
         if dilate:
-            self.dilation *= stride
+            dilation = self.dilation * stride
             stride = 1
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
@@ -206,7 +204,7 @@ class ResNet(nn.Module):
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
             layers.append(block(self.inplanes, planes, groups=self.groups,
-                                base_width=self.base_width, dilation=self.dilation*grids[i],
+                                base_width=self.base_width, dilation=dilation*grids[i],
                                 norm_layer=norm_layer))
 
         return nn.Sequential(*layers)
