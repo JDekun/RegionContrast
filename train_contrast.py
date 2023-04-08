@@ -24,6 +24,8 @@ parser.add_argument("--config", type=str, default="config.yaml")
 parser.add_argument('--seed', type=int, default=123, help='random seed')
 parser.add_argument("--local_rank", type=int, default=0)
 
+
+# 添加的参数
 parser.add_argument("--save_dir", type=str, default="default")
 parser.add_argument('--batch_size', default=2, type=int)
 parser.add_argument('--batch_size_val', default=2, type=int)
@@ -166,8 +168,8 @@ def train(model, optimizer, lr_scheduler, criterion, data_loader, epoch, scaler)
     union_meter = AverageMeter()
     target_meter = AverageMeter()
 
-    # if rank == 0:
-    #     logger.info('=========epoch[{}]=========,Train'.format(epoch))
+    if rank == 0:
+        logger.info('=========epoch[{}]=========,Train'.format(epoch))
 
     for step, batch in enumerate(data_loader):
         i_iter = epoch * len(data_loader) + step
@@ -178,7 +180,7 @@ def train(model, optimizer, lr_scheduler, criterion, data_loader, epoch, scaler)
         images = images.cuda()
         labels = labels.long().cuda()
 
-        with torch.cuda.amp.autocast(enabled=scaler is not None):
+        with torch.cuda.amp.autocast(enabled= scaler is not None):
             preds = model(images, is_eval=False)
             contrast_loss = preds[-1] / world_size
             loss = criterion(preds[:-1], labels) / world_size
@@ -247,6 +249,9 @@ def validate(model, data_loader, epoch):
     union_meter = AverageMeter()
     target_meter = AverageMeter()
 
+    if rank == 0:
+        logger.info('=========epoch[{}]=========,Val'.format(epoch))
+
     for step, batch in enumerate(data_loader):
         images, labels = batch
         images = images.cuda()
@@ -285,7 +290,6 @@ def validate(model, data_loader, epoch):
     
     # print(mIoU)
     if rank == 0:
-        logger.info('=========epoch[{}]=========,Val'.format(epoch))
         logger.info('accuracy = {} mIoU = {}'.format(accuracy_class, mIoU))
     # torch.save(mIoU, 'eval_metric.pth.tar')
     return mIoU

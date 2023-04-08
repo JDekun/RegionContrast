@@ -206,6 +206,9 @@ class ResNet(nn.Module):
             layers.append(block(self.inplanes, planes, groups=self.groups,
                                 base_width=self.base_width, dilation=self.dilation*grids[i],
                                 norm_layer=norm_layer))
+        if blocks == 3:
+            print(self.dilation)
+            print(grids)
 
         return nn.Sequential(*layers)
 
