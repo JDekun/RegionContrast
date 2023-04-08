@@ -73,6 +73,7 @@ class dec_deeplabv3_contrast(nn.Module):
             for cls_ind in range(self.num_classes):
                 if cls_ind in vals:
                     query = keys[list(vals).index(cls_ind)]   #256,
+                    print(query.shape)
                     l_pos = query.unsqueeze(1)*eval("self.queue"+str(cls_ind)).clone().detach()  #256, N1
                     print(l_pos.shape)
                     all_ind = [m for m in range(19)]
