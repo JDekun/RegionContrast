@@ -56,7 +56,7 @@ class dec_deeplabv3_contrast(nn.Module):
         logits = torch.cat((l_pos,l_neg),dim=1)
         logits /= self.temperature
         labels = torch.zeros((N,),dtype=torch.long).cuda()
-        print(logits)
+        print(logits.shape)
         return self.criterion(logits,labels)
     
 
