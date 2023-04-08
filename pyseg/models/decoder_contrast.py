@@ -52,6 +52,8 @@ class dec_deeplabv3_contrast(nn.Module):
         return new_fea, val.cuda()
 
     def _compute_contrast_loss(self, l_pos, l_neg):
+        print(l_pos.shape)
+        print(l_neg.shape)
         N = l_pos.size(0)
         logits = torch.cat((l_pos,l_neg),dim=1)
         logits /= self.temperature
@@ -67,16 +69,13 @@ class dec_deeplabv3_contrast(nn.Module):
         if not is_eval:
             bs = x.shape[0]
             keys, vals = self.construct_region(fea, res)  #keys: N,256   vals: N,  N is the category number in this batch
-            print(keys.shape)
             keys = nn.functional.normalize(keys,dim=1)
             contrast_loss = 0
 
             for cls_ind in range(self.num_classes):
                 if cls_ind in vals:
                     query = keys[list(vals).index(cls_ind)]   #256,
-                    print(query.shape)
                     l_pos = query.unsqueeze(1)*eval("self.queue"+str(cls_ind)).clone().detach()  #256, N1
-                    print(l_pos.shape)
                     all_ind = [m for m in range(19)]
                     l_neg = 0
                     tmp = all_ind.copy()
