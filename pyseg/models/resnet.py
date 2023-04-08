@@ -185,6 +185,7 @@ class ResNet(nn.Module):
         norm_layer = self._norm_layer
         downsample = None
         previous_dilation = self.dilation
+        dilation = self.dilation
         if dilate:
             dilation = self.dilation * stride
             stride = 1
