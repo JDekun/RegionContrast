@@ -89,7 +89,7 @@ class dec_deeplabv3_contrast(nn.Module):
             keys_origin, vals_origin = self.construct_region(fea, res)  #keys: bs,N,256   vals: N,  N is the category number in this batch
             contrast_loss = 0
             for n in range(len(keys_origin)): # 循环bs次
-                keys, vals = keys_origin[n], vals_origin[n]
+                keys, vals = keys_origin[n].squeeze, vals_origin[n].squeeze
                 keys = nn.functional.normalize(keys,dim=1)
 
                 for cls_ind in range(self.num_classes):
