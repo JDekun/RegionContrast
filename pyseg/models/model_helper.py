@@ -57,20 +57,20 @@ class ModelBuilder(nn.Module):
 
             if not is_eval:
                 pred_aux = self.auxor(feat1)
-                pred_aux = F.upsample(input=pred_aux, size=(h, w), mode='bilinear', align_corners=True)
+                pred_aux = F.interpolate(input=pred_aux, size=(h, w), mode='bilinear', align_corners=True)
             
             if self.contrast:
                 if not is_eval:
                     res, contrast_loss = pred_head
-                    res = F.upsample(input=res, size=(h, w), mode='bilinear', align_corners=True)
+                    res = F.interpolate(input=res, size=(h, w), mode='bilinear', align_corners=True)
                     return [res, pred_aux, contrast_loss]
                 else:
                     res = pred_head
-                    res = F.upsample(input=res, size=(h, w), mode='bilinear', align_corners=True)
-                    #fea = F.upsample(input=fea, size=(h, w), mode='bilinear', align_corners=True)
+                    res = F.interpolate(input=res, size=(h, w), mode='bilinear', align_corners=True)
+                    #fea = F.interpolate(input=fea, size=(h, w), mode='bilinear', align_corners=True)
                     return [res]            
             else:
-                pred_head = F.upsample(input=pred_head, size=(h, w), mode='bilinear', align_corners=True)
+                pred_head = F.interpolate(input=pred_head, size=(h, w), mode='bilinear', align_corners=True)
                 if not is_eval:
                     return [pred_head, pred_aux]
                 else:
@@ -78,5 +78,5 @@ class ModelBuilder(nn.Module):
         else:
             feat = self.encoder(x)
             pred_head = self.decoder(feat)
-            pred_head = F.upsample(input=pred_head, size=(h, w), mode='bilinear', align_corners=True)
+            pred_head = F.interpolate(input=pred_head, size=(h, w), mode='bilinear', align_corners=True)
             return pred_head
