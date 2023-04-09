@@ -52,8 +52,10 @@ class dec_deeplabv3_contrast(nn.Module):
         return new_fea, val.cuda()
 
     def _compute_contrast_loss(self, l_pos, l_neg):
-        N = l_pos.size(0)
-        logits = torch.cat((l_pos,l_neg),dim=1)
+        N = l_pos.size(1)
+        l_pos = l_pos.transpose(0,1)
+        l_neg = l_neg.repeat(N,1)
+        logits = torch.cat((l_pos,l_neg),dim=1) #256, N1*2
         logits /= self.temperature
         labels = torch.zeros((N,),dtype=torch.long).cuda()
         return self.criterion(logits,labels)
@@ -74,16 +76,24 @@ class dec_deeplabv3_contrast(nn.Module):
                 if cls_ind in vals:
                     query = keys[list(vals).index(cls_ind)]   #256,
                     l_pos = query.unsqueeze(1)*eval("self.queue"+str(cls_ind)).clone().detach()  #256, N1
+                    l_pos = l_pos.mean(0).unsqueeze(0)
                     all_ind = [m for m in range(19)]
                     l_neg = 0
                     tmp = all_ind.copy()
                     tmp.remove(cls_ind)
+                    i = 0
                     for cls_ind2 in tmp:
-                        l_neg += query.unsqueeze(1)*eval("self.queue"+str(cls_ind2)).clone().detach()
+                        temp = query.unsqueeze(1)*eval("self.queue"+str(cls_ind2)).clone().detach() #256, N1
+                        temp = temp.mean(0).unsqueeze(0)
+                        if i != 0:
+                            l_neg = torch.cat((l_neg, temp),dim=1)
+                        else:
+                            l_neg = temp
+                        i += 1
                     contrast_loss += self._compute_contrast_loss(l_pos, l_neg)
                 else:
                     continue
             for i in range(self.num_classes):
-                self._dequeue_and_enqueue(keys,vals,i, bs)
+                self._dequeue_and_enqueue(keys,vals,i, 1)
             return res, contrast_loss
         return res
