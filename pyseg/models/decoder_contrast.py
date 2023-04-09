@@ -5,7 +5,7 @@ from .base import  ASPP, get_syncbn
 
 class dec_deeplabv3_contrast(nn.Module):
    
-    def __init__(self, in_planes, num_classes=19, inner_planes=256, sync_bn=False, dilations=(12, 24, 36), temperature=0.2, queue_len=2975):
+    def __init__(self, in_planes, num_classes=19, inner_planes=256, sync_bn=False, dilations=(12, 24, 36), temperature=0.2, queue_len=3072):
         super(dec_deeplabv3_contrast, self).__init__()
 
         norm_layer = get_syncbn() if sync_bn else nn.BatchNorm2d
@@ -58,7 +58,12 @@ class dec_deeplabv3_contrast(nn.Module):
         logits = torch.cat((l_pos,l_neg),dim=1) #256, N1*2
         logits /= self.temperature
         labels = torch.zeros((N,),dtype=torch.long).cuda()
-        return self.criterion(logits,labels)
+        n = N/256
+        for i in range(n):
+            index = i*256
+            loss += self.criterion(logits[index:index+256],labels[index:index+256])
+        loss = loss/n
+        return loss
     
 
     def forward(self, x, is_eval = False):
