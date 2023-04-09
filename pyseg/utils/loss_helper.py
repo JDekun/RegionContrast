@@ -180,11 +180,11 @@ class OhemCrossEntropy2dTensor(nn.Module):
             #weight = torch.FloatTensor(
             #    [0.4762, 0.5, 0.4762, 1.4286, 1.1111, 0.4762, 0.8333, 0.5, 0.5, 0.8333, 0.5263, 0.5882,
             #    1.4286, 0.5, 3.3333,5.0, 10.0, 2.5, 0.8333]).cuda()
-            self.criterion = torch.nn.CrossEntropyLoss(reduction="elementwise_mean",
+            self.criterion = torch.nn.CrossEntropyLoss(reduction="mean",
                                                        weight=weight,
                                                        ignore_index=ignore_index)
         else:
-            self.criterion = torch.nn.CrossEntropyLoss(reduction="elementwise_mean",
+            self.criterion = torch.nn.CrossEntropyLoss(reduction="mean",
                                                        ignore_index=ignore_index)
 
     def forward(self, pred, target):

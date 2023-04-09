@@ -51,12 +51,21 @@ class dec_deeplabv3_contrast(nn.Module):
         val = torch.tensor([i for i in val if i<19])
         return new_fea, val.cuda()
 
+    # def _compute_contrast_loss(self, l_pos, l_neg):
+    #     N = l_pos.size(0)
+    #     logits = torch.cat((l_pos,l_neg),dim=1) #256, N1*2
+    #     logits /= self.temperature
+    #     labels = torch.zeros((N,),dtype=torch.long).cuda()
+    #     return self.criterion(logits,labels)
+
     def _compute_contrast_loss(self, l_pos, l_neg):
-        N = l_pos.size(0)
-        logits = torch.cat((l_pos,l_neg),dim=1)
-        logits /= self.temperature
-        labels = torch.zeros((N,),dtype=torch.long).cuda()
-        return self.criterion(logits,labels)
+        N = l_pos.size(1)
+        pos_logits = torch.exp(l_pos)
+        neg_logits = torch.exp(l_neg)
+        neg_logits = torch.sum(neg_logits)
+        loss = l_pos - torch.log(pos_logits + neg_logits)
+        loss = -loss.sum()/N
+        return loss
     
 
     def forward(self, x, is_eval = False):
@@ -74,16 +83,24 @@ class dec_deeplabv3_contrast(nn.Module):
                 if cls_ind in vals:
                     query = keys[list(vals).index(cls_ind)]   #256,
                     l_pos = query.unsqueeze(1)*eval("self.queue"+str(cls_ind)).clone().detach()  #256, N1
+                    l_pos = l_pos.mean(0).unsqueeze(0)
                     all_ind = [m for m in range(19)]
                     l_neg = 0
                     tmp = all_ind.copy()
                     tmp.remove(cls_ind)
+                    i = 0
                     for cls_ind2 in tmp:
-                        l_neg += query.unsqueeze(1)*eval("self.queue"+str(cls_ind2)).clone().detach()
+                        temp = query.unsqueeze(1)*eval("self.queue"+str(cls_ind2)).clone().detach() #256, N1
+                        temp = temp.mean(0).unsqueeze(0)
+                        if i !=0:
+                            l_neg = torch.cat((l_neg, temp),dim=0)
+                        else:
+                            l_neg = temp
+                        i += 1
                     contrast_loss += self._compute_contrast_loss(l_pos, l_neg)
                 else:
                     continue
             for i in range(self.num_classes):
-                self._dequeue_and_enqueue(keys,vals,i, bs)
+                self._dequeue_and_enqueue(keys,vals,i, 1)
             return res, contrast_loss
         return res

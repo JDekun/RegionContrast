@@ -93,7 +93,7 @@ def main():
         model = torch.nn.parallel.DistributedDataParallel(
             model, device_ids=[args.local_rank], output_device=args.local_rank,
             # this should be removed if we update BatchNorm stats
-            find_unused_parameters=True,
+            find_unused_parameters=False,
         ) 
     if cfg['saver']['pretrain']:
         state_dict = torch.load(cfg['saver']['pretrain'], map_location='cpu')['model_state']
