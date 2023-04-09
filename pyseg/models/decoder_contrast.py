@@ -5,7 +5,7 @@ from .base import  ASPP, get_syncbn
 
 class dec_deeplabv3_contrast(nn.Module):
    
-    def __init__(self, in_planes, num_classes=19, inner_planes=256, sync_bn=False, dilations=(12, 24, 36), temperature=0.2, queue_len=3072):
+    def __init__(self, in_planes, num_classes=19, inner_planes=256, sync_bn=False, dilations=(12, 24, 36), temperature=0.2, queue_len=2975):
         super(dec_deeplabv3_contrast, self).__init__()
 
         norm_layer = get_syncbn() if sync_bn else nn.BatchNorm2d
@@ -51,19 +51,20 @@ class dec_deeplabv3_contrast(nn.Module):
         val = torch.tensor([i for i in val if i<19])
         return new_fea, val.cuda()
 
+    # def _compute_contrast_loss(self, l_pos, l_neg):
+    #     N = l_pos.size(0)
+    #     logits = torch.cat((l_pos,l_neg),dim=1) #256, N1*2
+    #     logits /= self.temperature
+    #     labels = torch.zeros((N,),dtype=torch.long).cuda()
+    #     return self.criterion(logits,labels)
+
     def _compute_contrast_loss(self, l_pos, l_neg):
         N = l_pos.size(1)
-        l_pos = l_pos.transpose(0,1)
-        l_neg = l_neg.repeat(N,1)
-        logits = torch.cat((l_pos,l_neg),dim=1) #256, N1*2
-        logits /= self.temperature
-        labels = torch.zeros((N,),dtype=torch.long).cuda()
-        n = int(N/256)
-        loss = 0
-        for i in range(n):
-            index = i*256
-            loss += self.criterion(logits[index:index+256],labels[index:index+256])
-        loss = loss/n
+        pos_logits = torch.exp(l_pos)
+        neg_logits = torch.exp(l_neg)
+        neg_logits = torch.sum(neg_logits)
+        loss = l_pos - torch.log(pos_logits + neg_logits)
+        loss = loss.sum()/N
         return loss
     
 
@@ -91,8 +92,8 @@ class dec_deeplabv3_contrast(nn.Module):
                     for cls_ind2 in tmp:
                         temp = query.unsqueeze(1)*eval("self.queue"+str(cls_ind2)).clone().detach() #256, N1
                         temp = temp.mean(0).unsqueeze(0)
-                        if i != 0:
-                            l_neg = torch.cat((l_neg, temp),dim=1)
+                        if i !=0:
+                            l_neg = torch.cat((l_neg, temp),dim=0)
                         else:
                             l_neg = temp
                         i += 1
