@@ -64,7 +64,7 @@ class dec_deeplabv3_contrast(nn.Module):
         neg_logits = torch.exp(l_neg)
         neg_logits = torch.sum(neg_logits)
         loss = l_pos - torch.log(pos_logits + neg_logits)
-        loss = loss.sum()/N
+        loss = -loss.sum()/N
         return loss
     
 
