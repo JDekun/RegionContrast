@@ -40,8 +40,8 @@ class dec_deeplabv3_contrast(nn.Module):
         fea_origin = fea
         pred_origin = pred
         for n in range(len(fea_origin)):
-            fea = fea_origin[i].unsqueeze(0)
-            pred = pred_origin[i].unsqueeze(0)
+            fea = fea_origin[n].unsqueeze(0)
+            pred = pred_origin[n].unsqueeze(0)
             bs = fea.shape[0]
             pred = pred.max(1)[1].squeeze().view(bs, -1)  
             val = torch.unique(pred)
