@@ -59,7 +59,7 @@ class dec_deeplabv3_contrast(nn.Module):
         logits /= self.temperature
         labels = torch.zeros((N,),dtype=torch.long).cuda()
         n = int(N/256)
-        print(n)
+        loss = 0
         for i in range(n):
             index = i*256
             loss += self.criterion(logits[index:index+256],labels[index:index+256])
