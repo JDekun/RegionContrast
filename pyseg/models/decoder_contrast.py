@@ -39,7 +39,7 @@ class dec_deeplabv3_contrast(nn.Module):
     def construct_region(self, fea, pred):
         fea_origin = fea
         pred_origin = pred
-        for i in range(len(fea_origin)):
+        for n in range(len(fea_origin)):
             fea = fea_origin[i].unsqueeze(0)
             pred = pred_origin[i].unsqueeze(0)
             bs = fea.shape[0]
@@ -54,8 +54,9 @@ class dec_deeplabv3_contrast(nn.Module):
                     class_fea = fea[:,pred==i].mean(1).unsqueeze(0)   
                     new_fea = torch.cat((new_fea,class_fea),dim=0)
             val = torch.tensor([i for i in val if i<19])
-            if i == 0:
-                bs_fea, bs_val = new_fea.unsqueeze(0), val.unsqueeze(0).cuda()
+            if n == 0:
+                bs_fea = new_fea.unsqueeze(0), 
+                bs_val = val.unsqueeze(0).cuda()
             else:
                 bs_fea = torch.cat((bs_fea, new_fea.unsqueeze(0)),dim=0)
                 bs_val = torch.cat((bs_val, val.unsqueeze(0).cuda()),dim=0)
@@ -87,8 +88,8 @@ class dec_deeplabv3_contrast(nn.Module):
             bs = x.shape[0]
             keys_origin, vals_origin = self.construct_region(fea, res)  #keys: bs,N,256   vals: N,  N is the category number in this batch
             contrast_loss = 0
-            for i in range(len(keys_origin)): # 循环bs次
-                keys, vals = keys_origin[i], vals_origin[i]
+            for n in range(len(keys_origin)): # 循环bs次
+                keys, vals = keys_origin[n], vals_origin[n]
                 keys = nn.functional.normalize(keys,dim=1)
 
                 for cls_ind in range(self.num_classes):
