@@ -40,8 +40,6 @@ class dec_deeplabv3_contrast(nn.Module):
         bs = fea.shape[0]
         pred = pred.max(1)[1].squeeze().view(bs, -1)  
         val = torch.unique(pred)
-        print(val)
-        print(val.shape)
         fea=fea.squeeze()
         fea = fea.view(bs, 256,-1).permute(1,0,2) 
     
