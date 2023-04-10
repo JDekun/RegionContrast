@@ -116,7 +116,6 @@ class ResNet(nn.Module):
         norm_layer = get_syncbn() if sync_bn else nn.BatchNorm2d
         self._norm_layer = norm_layer
 
-        self.inplanes = 64
         self.dilation = 1
 
         if replace_stride_with_dilation is None:
@@ -136,9 +135,11 @@ class ResNet(nn.Module):
         if self.downsample_before_x1 or self.downsample_before_x4:
             self.downsample = nn.AvgPool2d(kernel_size=3, stride=2)
         if layers == [3, 4, 6, 3]:
+            self.inplanes = 64
             self.conv1 =nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3,
                                 bias=False)
         else:
+            self.inplanes = 128
             self.conv1 = nn.Sequential(
                 conv3x3(3, 64, stride=2),
                 norm_layer(64),
