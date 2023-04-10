@@ -155,21 +155,17 @@ class ResNet(nn.Module):
             self.relu = nn.ReLU(inplace=True)
         else:
             self.inplanes = 128
-            self.resinit = nn.Sequential(
-                    OrderedDict([
-                            ("conv1",nn.Conv2d(3, 64, kernel_size=3, stride=2, padding=1, bias=False),),
-                            ("bn1", norm_layer(64)),
-                            ("relu1", nn.ReLU(inplace=False)),
-                            ("conv2",nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1, bias=False),),
-                            ("bn2", norm_layer(64)),
-                            ("relu2", nn.ReLU(inplace=False)),
-                            ("conv3",nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1, bias=False),),
-                            ("bn3",norm_layer(self.inplanes),),
-                            ("relu3", nn.ReLU(inplace=False)),
-                        ]
-                    )
-                )
-
+            
+            self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=2, padding=1, bias=False)
+            self.bn1 = norm_layer(64)
+            self.relu1 = nn.ReLU(inplace=False)
+            self.conv2 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1, bias=False)
+            self.bn2 = norm_layer(64)
+            self.relu2 = nn.ReLU(inplace=False)
+            self.conv3 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1, bias=False)
+            self.bn3 = norm_layer(self.inplanes)
+            self.relu3 = nn.ReLU(inplace=False)
+        
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1, ceil_mode=True)  # change
 
         self.layer1 = self._make_layer(block, 64, layers[0])
@@ -237,7 +233,9 @@ class ResNet(nn.Module):
         if self.layers == [3, 4, 6, 3]:
             x = self.relu(self.bn1(self.conv1(x)))
         else:
-            x = self.resinit(x)
+            x = self.relu1(self.bn1(self.conv1(x)))
+            x = self.relu2(self.bn2(self.conv2(x)))
+            x = self.relu3(self.bn3(self.conv3(x)))
     
         x = self.maxpool(x)
        
