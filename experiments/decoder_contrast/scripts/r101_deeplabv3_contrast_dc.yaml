@@ -62,7 +62,7 @@ net: # Required.
       zero_init_residual: True
       replace_stride_with_dilation: [False, True, True]  #layer0...1 is fixed, layer2...4
   decoder:
-    type: pyseg.models.decoder_contrast.dec_deeplabv3_contrast
+    type: pyseg.models.decoder_contrast_dc.dec_deeplabv3_contrast_dc
     kwargs:
       inner_planes: 256
       dilations: [12, 24, 36]

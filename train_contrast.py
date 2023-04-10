@@ -40,7 +40,7 @@ def main():
     global args, cfg
     args = parser.parse_args()
 
-    cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
+    cfg = yaml.load(open("./scripts/"+args.config, 'r'), Loader=yaml.Loader)
 
     cfg['dataset'].update({'batch_size': args.batch_size, 'batch_size_val': args.batch_size_val})
     cfg['trainer'].update({'epochs': args.epochs})
