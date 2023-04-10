@@ -37,33 +37,19 @@ class dec_deeplabv3_contrast(nn.Module):
         eval("self.ptr"+str(cat))[0] = ptr
 
     def construct_region(self, fea, pred):
-        fea_origin = fea
-        pred_origin = pred
-        for n in range(len(fea_origin)):
-            fea = fea_origin[n].unsqueeze(0)
-            pred = pred_origin[n].unsqueeze(0)
-            bs = fea.shape[0]
-            pred = pred.max(1)[1].squeeze().view(bs, -1)  
-            val = torch.unique(pred)
-            fea=fea.squeeze()
-            fea = fea.view(bs, 256,-1).permute(1,0,2) 
-        
-            new_fea = fea[:,pred==val[0]].mean(1).unsqueeze(0) 
-            for i in val[1:]:
-                if(i<19):
-                    class_fea = fea[:,pred==i].mean(1).unsqueeze(0)   
-                    new_fea = torch.cat((new_fea,class_fea),dim=0)
-            val = torch.tensor([i for i in val if i<19])
-            if n == 0:
-                bs_fea = new_fea.unsqueeze(0)
-                bs_val = val.unsqueeze(0).cuda()
-            else:
-                bs_fea = torch.cat((bs_fea, new_fea.unsqueeze(0)),dim=0)
-                bs_val = torch.cat((bs_val, val.unsqueeze(0).cuda()),dim=0)
-            print(n)
-            print(bs_fea.shape)
-            print(bs_val.shape)
-        return bs_fea, bs_val
+        bs = fea.shape[0]
+        pred = pred.max(1)[1].squeeze().view(bs, -1)  
+        val = torch.unique(pred)
+        fea=fea.squeeze()
+        fea = fea.view(bs, 256,-1).permute(1,0,2) 
+    
+        new_fea = fea[:,pred==val[0]].mean(1).unsqueeze(0) 
+        for i in val[1:]:
+            if(i<19):
+                class_fea = fea[:,pred==i].mean(1).unsqueeze(0)   
+                new_fea = torch.cat((new_fea,class_fea),dim=0)
+        val = torch.tensor([i for i in val if i<19])
+        return new_fea, val.cuda()
 
     # def _compute_contrast_loss(self, l_pos, l_neg):
     #     N = l_pos.size(0)
@@ -89,10 +75,11 @@ class dec_deeplabv3_contrast(nn.Module):
         res = self.final(fea)
         if not is_eval:
             bs = x.shape[0]
-            keys_origin, vals_origin = self.construct_region(fea, res)  #keys: bs,N,256   vals: N,  N is the category number in this batch
+            fea_origin, res_origin = fea, res
             contrast_loss = 0
-            for n in range(len(keys_origin)): # 循环bs次
-                keys, vals = keys_origin[n].squeeze, vals_origin[n].squeeze
+            for n in range(len(fea_origin)):
+                fea, res = fea_origin[n].unsqueeze(0), res_origin[n].unsqueeze(0)
+                keys, vals = self.construct_region(fea, res)  #keys: N,256   vals: N,  N is the category number in this batch
                 keys = nn.functional.normalize(keys,dim=1)
 
                 for cls_ind in range(self.num_classes):
