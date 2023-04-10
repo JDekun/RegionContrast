@@ -76,7 +76,7 @@ def main():
         # write into csv
         with open(results_csv, "a") as f:
             # 记录每个epoch对应的train_loss、lr以及验证集各指标
-            train_info = f"epoch,mIOU\n" 
+            train_info = f"epoch,mIOU,best_mIOU\n" 
             f.write(train_info)
 
     # amp设置
@@ -135,7 +135,7 @@ def main():
                 # write into txt
                 with open(results_csv, "a") as f:
                     # 记录每个epoch对应的train_loss、lr以及验证集各指标
-                    train_info = f"{epoch},{prec}\n" 
+                    train_info = f"{epoch},{prec},{best_prec}\n" 
                     f.write(train_info)
             if rank == 0:
                 if prec > best_prec:
