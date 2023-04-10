@@ -75,32 +75,36 @@ class dec_deeplabv3_contrast(nn.Module):
         res = self.final(fea)
         if not is_eval:
             bs = x.shape[0]
-            keys, vals = self.construct_region(fea, res)  #keys: N,256   vals: N,  N is the category number in this batch
-            keys = nn.functional.normalize(keys,dim=1)
+            fea_origin, res_origin = fea, res
             contrast_loss = 0
+            index = len(fea_origin)
+            for n in range(index):
+                fea, res = fea_origin[n].unsqueeze(0), res_origin[n].unsqueeze(0)
+                keys, vals = self.construct_region(fea, res)  #keys: N,256   vals: N,  N is the category number in this batch
+                keys = nn.functional.normalize(keys,dim=1)
 
-            for cls_ind in range(self.num_classes):
-                if cls_ind in vals:
-                    query = keys[list(vals).index(cls_ind)]   #256,
-                    l_pos = query.unsqueeze(1)*eval("self.queue"+str(cls_ind)).clone().detach()  #256, N1
-                    l_pos = l_pos.mean(0).unsqueeze(0)
-                    all_ind = [m for m in range(19)]
-                    l_neg = 0
-                    tmp = all_ind.copy()
-                    tmp.remove(cls_ind)
-                    i = 0
-                    for cls_ind2 in tmp:
-                        temp = query.unsqueeze(1)*eval("self.queue"+str(cls_ind2)).clone().detach() #256, N1
-                        temp = temp.mean(0).unsqueeze(0)
-                        if i !=0:
-                            l_neg = torch.cat((l_neg, temp),dim=0)
-                        else:
-                            l_neg = temp
-                        i += 1
-                    contrast_loss += self._compute_contrast_loss(l_pos, l_neg)
-                else:
-                    continue
-            for i in range(self.num_classes):
-                self._dequeue_and_enqueue(keys,vals,i, 1)
-            return res, contrast_loss
+                for cls_ind in range(self.num_classes):
+                    if cls_ind in vals:
+                        query = keys[list(vals).index(cls_ind)]   #256,
+                        l_pos = query.unsqueeze(1)*eval("self.queue"+str(cls_ind)).clone().detach()  #256, N1
+                        l_pos = l_pos.mean(0).unsqueeze(0)
+                        all_ind = [m for m in range(19)]
+                        l_neg = 0
+                        tmp = all_ind.copy()
+                        tmp.remove(cls_ind)
+                        i = 0
+                        for cls_ind2 in tmp:
+                            temp = query.unsqueeze(1)*eval("self.queue"+str(cls_ind2)).clone().detach() #256, N1
+                            temp = temp.mean(0).unsqueeze(0)
+                            if i !=0:
+                                l_neg = torch.cat((l_neg, temp),dim=0)
+                            else:
+                                l_neg = temp
+                            i += 1
+                        contrast_loss += self._compute_contrast_loss(l_pos, l_neg)
+                    else:
+                        continue
+                for i in range(self.num_classes):
+                    self._dequeue_and_enqueue(keys,vals,i, 1)
+            return res_origin, contrast_loss/index
         return res
