@@ -144,7 +144,7 @@ class ResNet(nn.Module):
             norm_layer(64),
             nn.ReLU(inplace=True))
         self.conv3 = nn.Sequential(
-            conv3x3(64, 128)
+            conv3x3(64, 128),
             norm_layer(128),
             nn.ReLU(inplace=True))
         # self.conv1 =nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3,
