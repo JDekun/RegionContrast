@@ -105,5 +105,5 @@ class dec_deeplabv3_contrast(nn.Module):
                         continue
                 for i in range(self.num_classes):
                     self._dequeue_and_enqueue(keys,vals,i, 1)
-            return res, contrast_loss
+            return res_origin, contrast_loss
         return res
