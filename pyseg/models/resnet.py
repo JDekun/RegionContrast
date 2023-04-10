@@ -9,7 +9,7 @@ model_urls = {
     'resnet18': '/path/to/model_zoo/resnet18-5c106cde.pth',
     'resnet34': '/path/to/model_zoo/resnet34-333f7ec4.pth',
     'resnet50': '../../../../input/pre-trained/resnet50-imagenet.pth',
-    'resnet101': '../../../../input/pre-trained/resnet101-imagenet.pth',
+    'resnet101': '../../../../input/pre-trained/resnet101-imagenet-openseg.pth',
     'resnet152': '/path/to/model_zoo/resnet152-0d43d698.pth',
 }
 
@@ -135,16 +135,18 @@ class ResNet(nn.Module):
         self.downsample_before_x4 = downsample_before_x4
         if self.downsample_before_x1 or self.downsample_before_x4:
             self.downsample = nn.AvgPool2d(kernel_size=3, stride=2)
-        # self.conv1 = nn.Sequential(
-        #     conv3x3(3, 64, stride=2),
-        #     norm_layer(64),
-        #     nn.ReLU(inplace=True),
-        #     conv3x3(64, 64),
-        #     norm_layer(64),
-        #     nn.ReLU(inplace=True),
-        #     conv3x3(64, self.inplanes))
-        self.conv1 =nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3,
-                               bias=False)
+        if layers == [3, 4, 6, 3]:
+            self.conv1 =nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3,
+                                bias=False)
+        else:
+            self.conv1 = nn.Sequential(
+                conv3x3(3, 64, stride=2),
+                norm_layer(64),
+                nn.ReLU(inplace=True),
+                conv3x3(64, 64),
+                norm_layer(64),
+                nn.ReLU(inplace=True),
+                conv3x3(64, self.inplanes))
         self.bn1 = norm_layer(self.inplanes)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1, ceil_mode=True)  # change
