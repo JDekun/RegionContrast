@@ -1,6 +1,9 @@
 import torch
 import torch.nn as nn
 from .base import get_syncbn
+
+from collections import OrderedDict
+
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
            'resnet152']
 
@@ -112,11 +115,12 @@ class ResNet(nn.Module):
                  groups=1, width_per_group=64, replace_stride_with_dilation=[False, False, False],
                  sync_bn=False, multi_grid=False,fpn=False, downsample_before_x1 = False, downsample_before_x4=False):
         super(ResNet, self).__init__()
+        
+        self.layers = layers
 
         norm_layer = get_syncbn() if sync_bn else nn.BatchNorm2d
         self._norm_layer = norm_layer
 
-        self.inplanes = 128
         self.dilation = 1
 
         if replace_stride_with_dilation is None:
@@ -135,23 +139,37 @@ class ResNet(nn.Module):
         self.downsample_before_x4 = downsample_before_x4
         if self.downsample_before_x1 or self.downsample_before_x4:
             self.downsample = nn.AvgPool2d(kernel_size=3, stride=2)
-        self.conv1 = nn.Sequential(
-            conv3x3(3, 64, stride=2),
-            norm_layer(64),
-            nn.ReLU(inplace=True))
-        self.conv2 = nn.Sequential(
-            conv3x3(64, 64),
-            norm_layer(64),
-            nn.ReLU(inplace=True))
-        self.conv3 = nn.Sequential(
-            conv3x3(64, 128),
-            norm_layer(128),
-            nn.ReLU(inplace=True))
-        # self.conv1 =nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3,
-        #                        bias=False)
+        # self.conv1 = nn.Sequential(
+        #     conv3x3(3, 64, stride=2),
+        #     norm_layer(64),
+        #     nn.ReLU(inplace=True),
+        #     conv3x3(64, 64),
+        #     norm_layer(64),
+        #     nn.ReLU(inplace=True),
+        #     conv3x3(64, self.inplanes))
+        if layers == [3, 4, 6, 3]:
+            self.inplanes = 64
+            self.conv1 =nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3,
+                                bias=False)
+            self.bn1 = norm_layer(self.inplanes)
+            self.relu = nn.ReLU(inplace=True)
+        else:
+            self.inplanes = 128
+            self.resinit = nn.Sequential(
+                    OrderedDict([
+                            ("conv1",nn.Conv2d(3, 64, kernel_size=3, stride=2, padding=1, bias=False),),
+                            ("bn1", norm_layer(64)),
+                            ("relu1", nn.ReLU(inplace=False)),
+                            ("conv2",nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1, bias=False),),
+                            ("bn2", norm_layer(64)),
+                            ("relu2", nn.ReLU(inplace=False)),
+                            ("conv3",nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1, bias=False),),
+                            ("bn3",norm_layer(self.inplanes),),
+                            ("relu3", nn.ReLU(inplace=False)),
+                        ]
+                    )
+                )
 
-        # self.bn1 = norm_layer(self.inplanes)
-        # self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1, ceil_mode=True)  # change
 
         self.layer1 = self._make_layer(block, 64, layers[0])
@@ -216,11 +234,10 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-      
-        # x = self.relu(self.bn1(self.conv1(x)))
-        x = self.conv1(x)
-        x = self.conv2(x)
-        x = self.conv3(x)
+        if self.layers == [3, 4, 6, 3]:
+            x = self.relu(self.bn1(self.conv1(x)))
+        else:
+            x = self.resinit(x)
     
         x = self.maxpool(x)
        
