@@ -55,7 +55,7 @@ class dec_deeplabv3_contrast(nn.Module):
                     new_fea = torch.cat((new_fea,class_fea),dim=0)
             val = torch.tensor([i for i in val if i<19])
             if n == 0:
-                bs_fea = new_fea.unsqueeze(0), 
+                bs_fea = new_fea.unsqueeze(0)
                 bs_val = val.unsqueeze(0).cuda()
             else:
                 bs_fea = torch.cat((bs_fea, new_fea.unsqueeze(0)),dim=0)
