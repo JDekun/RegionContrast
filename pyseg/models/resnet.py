@@ -138,15 +138,20 @@ class ResNet(nn.Module):
         self.conv1 = nn.Sequential(
             conv3x3(3, 64, stride=2),
             norm_layer(64),
-            nn.ReLU(inplace=True),
+            nn.ReLU(inplace=True))
+        self.conv2 = nn.Sequential(
             conv3x3(64, 64),
             norm_layer(64),
-            nn.ReLU(inplace=True),
-            conv3x3(64, self.inplanes))
+            nn.ReLU(inplace=True))
+        self.conv3 = nn.Sequential(
+            conv3x3(64, 128)
+            norm_layer(128),
+            nn.ReLU(inplace=True))
         # self.conv1 =nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3,
         #                        bias=False)
-        self.bn1 = norm_layer(self.inplanes)
-        self.relu = nn.ReLU(inplace=True)
+
+        # self.bn1 = norm_layer(self.inplanes)
+        # self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1, ceil_mode=True)  # change
 
         self.layer1 = self._make_layer(block, 64, layers[0])
@@ -212,7 +217,10 @@ class ResNet(nn.Module):
 
     def forward(self, x):
       
-        x = self.relu(self.bn1(self.conv1(x)))
+        # x = self.relu(self.bn1(self.conv1(x)))
+        x = self.conv1(x)
+        x = self.conv2(x)
+        x = self.conv3(x)
     
         x = self.maxpool(x)
        
