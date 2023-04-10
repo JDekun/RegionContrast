@@ -38,11 +38,9 @@ class dec_deeplabv3_contrast(nn.Module):
 
     def construct_region(self, fea, pred):
         fea_origin = fea
-        print(fea_origin.shape)
         pred_origin = pred
         for n in range(len(fea_origin)):
             fea = fea_origin[n].unsqueeze(0)
-            print(fea.shape)
             pred = pred_origin[n].unsqueeze(0)
             bs = fea.shape[0]
             pred = pred.max(1)[1].squeeze().view(bs, -1)  
@@ -62,6 +60,9 @@ class dec_deeplabv3_contrast(nn.Module):
             else:
                 bs_fea = torch.cat((bs_fea, new_fea.unsqueeze(0)),dim=0)
                 bs_val = torch.cat((bs_val, val.unsqueeze(0).cuda()),dim=0)
+            print(n)
+            print(bs_fea.shape)
+            print(bs_val.shape)
         return bs_fea, bs_val
 
     # def _compute_contrast_loss(self, l_pos, l_neg):
