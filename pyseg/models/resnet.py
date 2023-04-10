@@ -9,7 +9,7 @@ model_urls = {
     'resnet18': '/path/to/model_zoo/resnet18-5c106cde.pth',
     'resnet34': '/path/to/model_zoo/resnet34-333f7ec4.pth',
     'resnet50': '../../../../input/pre-trained/resnet50-imagenet.pth',
-    'resnet101': '/path/to/model_zoo/resnet101-2a57e44d.pth',
+    'resnet101': '../../../../input/pre-trained/resnet101-imagenet-openseg.pth',
     'resnet152': '/path/to/model_zoo/resnet152-0d43d698.pth',
 }
 
@@ -307,7 +307,10 @@ def resnet101(pretrained=True, **kwargs):
     """
     model = ResNet(Bottleneck, [3, 4, 23, 3], **kwargs)
     if pretrained:
-        model.load_state_dict(torch.load(model_urls['resnet101'],map_location="cpu"), strict=False)
+        missing_keys, unexpected_keys = model.load_state_dict(torch.load(model_urls['resnet101'],map_location="cpu"), strict=False)
+        if len(missing_keys) != 0 or len(unexpected_keys) != 0:
+            print("missing_keys: ", missing_keys)
+            print("unexpected_keys: ", unexpected_keys)
     return model
 
 

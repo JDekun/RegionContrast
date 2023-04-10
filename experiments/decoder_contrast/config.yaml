@@ -56,7 +56,7 @@ net: # Required.
     aux_plane: 1024
     loss_weight: 0.4
   encoder:
-    type: pyseg.models.resnet.resnet50
+    type: pyseg.models.resnet.resnet101
     kwargs:
       multi_grid: True
       zero_init_residual: True
