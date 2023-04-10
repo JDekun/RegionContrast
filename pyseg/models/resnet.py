@@ -1,6 +1,9 @@
 import torch
 import torch.nn as nn
 from .base import get_syncbn
+
+from collections import OrderedDict
+
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
            'resnet152']
 
@@ -9,7 +12,7 @@ model_urls = {
     'resnet18': '/path/to/model_zoo/resnet18-5c106cde.pth',
     'resnet34': '/path/to/model_zoo/resnet34-333f7ec4.pth',
     'resnet50': '../../../../input/pre-trained/resnet50-imagenet.pth',
-    'resnet101': '/path/to/model_zoo/resnet101-2a57e44d.pth',
+    'resnet101': '../../../../input/pre-trained/resnet101-imagenet-openseg.pth',
     'resnet152': '/path/to/model_zoo/resnet152-0d43d698.pth',
 }
 
@@ -112,11 +115,12 @@ class ResNet(nn.Module):
                  groups=1, width_per_group=64, replace_stride_with_dilation=[False, False, False],
                  sync_bn=False, multi_grid=False,fpn=False, downsample_before_x1 = False, downsample_before_x4=False):
         super(ResNet, self).__init__()
+        
+        self.layers = layers
 
         norm_layer = get_syncbn() if sync_bn else nn.BatchNorm2d
         self._norm_layer = norm_layer
 
-        self.inplanes = 64
         self.dilation = 1
 
         if replace_stride_with_dilation is None:
@@ -143,10 +147,25 @@ class ResNet(nn.Module):
         #     norm_layer(64),
         #     nn.ReLU(inplace=True),
         #     conv3x3(64, self.inplanes))
-        self.conv1 =nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3,
-                               bias=False)
-        self.bn1 = norm_layer(self.inplanes)
-        self.relu = nn.ReLU(inplace=True)
+        if layers == [3, 4, 6, 3]:
+            self.inplanes = 64
+            self.conv1 =nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3,
+                                bias=False)
+            self.bn1 = norm_layer(self.inplanes)
+            self.relu = nn.ReLU(inplace=True)
+        else:
+            self.inplanes = 128
+            
+            self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=2, padding=1, bias=False)
+            self.bn1 = norm_layer(64)
+            self.relu1 = nn.ReLU(inplace=False)
+            self.conv2 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1, bias=False)
+            self.bn2 = norm_layer(64)
+            self.relu2 = nn.ReLU(inplace=False)
+            self.conv3 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1, bias=False)
+            self.bn3 = norm_layer(self.inplanes)
+            self.relu3 = nn.ReLU(inplace=False)
+        
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1, ceil_mode=True)  # change
 
         self.layer1 = self._make_layer(block, 64, layers[0])
@@ -211,8 +230,12 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-      
-        x = self.relu(self.bn1(self.conv1(x)))
+        if self.layers == [3, 4, 6, 3]:
+            x = self.relu(self.bn1(self.conv1(x)))
+        else:
+            x = self.relu1(self.bn1(self.conv1(x)))
+            x = self.relu2(self.bn2(self.conv2(x)))
+            x = self.relu3(self.bn3(self.conv3(x)))
     
         x = self.maxpool(x)
        
@@ -307,7 +330,10 @@ def resnet101(pretrained=True, **kwargs):
     """
     model = ResNet(Bottleneck, [3, 4, 23, 3], **kwargs)
     if pretrained:
-        model.load_state_dict(torch.load(model_urls['resnet101'],map_location="cpu"), strict=False)
+        missing_keys, unexpected_keys = model.load_state_dict(torch.load(model_urls['resnet101'],map_location="cpu"), strict=False)
+        if len(missing_keys) != 0 or len(unexpected_keys) != 0:
+            print("missing_keys: ", missing_keys)
+            print("unexpected_keys: ", unexpected_keys)
     return model
 
 
