@@ -116,7 +116,7 @@ class ResNet(nn.Module):
         norm_layer = get_syncbn() if sync_bn else nn.BatchNorm2d
         self._norm_layer = norm_layer
 
-        self.inplanes = 64
+        self.inplanes = 128
         self.dilation = 1
 
         if replace_stride_with_dilation is None:
@@ -142,10 +142,10 @@ class ResNet(nn.Module):
             conv3x3(64, 64),
             norm_layer(64),
             nn.ReLU(inplace=True),
-            conv3x3(64, self.inplanes))
+            conv3x3(64, 64))
         # self.conv1 =nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3,
         #                        bias=False)
-        self.bn1 = norm_layer(self.inplanes)
+        self.bn1 = norm_layer(64)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1, ceil_mode=True)  # change
 
