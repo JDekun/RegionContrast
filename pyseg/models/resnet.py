@@ -9,7 +9,7 @@ model_urls = {
     'resnet18': '/path/to/model_zoo/resnet18-5c106cde.pth',
     'resnet34': '/path/to/model_zoo/resnet34-333f7ec4.pth',
     'resnet50': '../../../../input/pre-trained/resnet50-imagenet.pth',
-    'resnet101': '../../../../input/pre-trained/resnet101-imagenet.pth',
+    'resnet101': '../../../../input/pre-trained/resnet101-imagenet-openseg.pth',
     'resnet152': '/path/to/model_zoo/resnet152-0d43d698.pth',
 }
 
