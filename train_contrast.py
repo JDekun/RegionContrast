@@ -182,9 +182,12 @@ def train(model, optimizer, lr_scheduler, criterion, data_loader, epoch, scaler)
 
         with torch.cuda.amp.autocast(enabled= scaler is not None):
             preds = model(images, is_eval=False)
-            contrast_loss = preds[-1] / world_size
-            loss = criterion(preds[:-1], labels) / world_size
-            loss += cfg['criterion']['contrast_weight']*contrast_loss
+            if len(preds)>2:
+                contrast_loss = preds[-1] / world_size
+                loss = criterion(preds[:-1], labels) / world_size
+                loss += cfg['criterion']['contrast_weight']*contrast_loss
+            else:
+                loss = criterion(preds[:], labels) / world_size
             
         optimizer.zero_grad()
         if scaler is not None:

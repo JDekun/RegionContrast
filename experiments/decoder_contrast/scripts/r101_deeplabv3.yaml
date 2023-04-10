@@ -2,7 +2,7 @@ dataset: # Required.
   type: cityscapes
   train:
     data_root: ../../../../input/cityscapes/Cityscape
-    data_list: ./cityscapes/train.txt
+    data_list: ../cityscapes/train.txt
     flip: True
     GaussianBlur: False
     rand_resize: [0.5, 2.0]
@@ -12,7 +12,7 @@ dataset: # Required.
       size: [769, 769] # crop image with HxW size
   val:
     data_root: ../../../../input/cityscapes/Cityscape
-    data_list: ./cityscapes/val.txt
+    data_list: ../cityscapes/val.txt
     crop:
       type: center
       size: [769, 769] # crop image with HxW size
@@ -62,7 +62,7 @@ net: # Required.
       zero_init_residual: True
       replace_stride_with_dilation: [False, True, True]  #layer0...1 is fixed, layer2...4
   decoder:
-    type: pyseg.models.decoder_contrast.dec_deeplabv3_contrast
+    type: pyseg.models.decoder.dec_deeplabv3
     kwargs:
       inner_planes: 256
       dilations: [12, 24, 36]
