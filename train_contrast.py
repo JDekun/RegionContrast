@@ -31,6 +31,7 @@ parser.add_argument('--batch_size', default=2, type=int)
 parser.add_argument('--batch_size_val', default=2, type=int)
 parser.add_argument('--epochs', default=100, type=int)
 parser.add_argument("--amp",dest="amp",action="store_true")
+parser.add_argument("--resume",type=str, default="")
 
 logger =init_log('global', logging.INFO)
 logger.propagate = 0
@@ -121,9 +122,25 @@ def main():
     optimizer = get_optimizer(params_list, cfg_optim)
     lr_scheduler = get_scheduler(cfg_trainer, len(trainloader), optimizer)  # TODO
 
+    start_epoch = 0
+    if args.resume:
+        checkpoint = torch.load("../../input/resume/"+args.resume, map_location='cpu')  # 读取之前保存的权重文件(包括优化器以及学习率策略)
+        if len(missing_keys) != 0 or len(unexpected_keys) != 0:
+            print("missing_keys: ", missing_keys)
+            print("unexpected_keys: ", unexpected_keys)
+
+        missing_keys, unexpected_keys = model.load_state_dict(checkpoint['model_state'])
+        optimizer.load_state_dict(checkpoint['optimizer_state'])
+        lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
+        start_epoch = checkpoint['epoch'] + 1
+        # if not args.run_id and ('run_id' in checkpoint.keys()):
+        #     args.run_id = checkpoint['run_id']
+        if args.amp:
+            scaler.load_state_dict(checkpoint["scaler"])
+        
     # Start to train model
     best_prec = 0
-    for epoch in range(cfg_trainer['epochs']):
+    for epoch in range(start_epoch, cfg_trainer['epochs']):
         # Training
         train(model, optimizer, lr_scheduler, criterion, trainloader, epoch, scaler)
         # Validataion
@@ -142,7 +159,8 @@ def main():
                     best_prec = prec
                     state = {'epoch': epoch,
                          'model_state': model.state_dict(),
-                         'optimizer_state': optimizer.state_dict()}
+                         'optimizer_state': optimizer.state_dict(),
+                         'lr_scheduler': lr_scheduler.state_dict()}
                     if args.amp:
                         state["scaler"] = scaler.state_dict()
                     torch.save(state, osp.join(save_dir, 'best.pth'))
