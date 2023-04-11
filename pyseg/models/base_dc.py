@@ -28,7 +28,10 @@ class MEP(nn.Module):
                                    padding=dilations[0], dilation=dilations[0], bias=False),
                                    norm_layer(inner_planes),
                                    nn.ReLU(inplace=True))
-        self.proj3 = nn.Sequential(nn.Conv2d(inner_planes, proj_dim, kernel_size=1, padding=0, dilation=1, bias=False),
+        self.proj3 = nn.Sequential(nn.Conv2d(inner_planes, inner_planes, kernel_size=1, padding=0, dilation=1, bias=False),
+                                   norm_layer(inner_planes),
+                                   nn.ReLU(inplace=True),
+                                   nn.Conv2d(inner_planes, proj_dim, kernel_size=1, padding=0, dilation=1, bias=False),
                                    norm_layer(proj_dim),
                                    nn.ReLU(inplace=True))
         # 尺度二
@@ -36,7 +39,10 @@ class MEP(nn.Module):
                                    padding=dilations[1], dilation=dilations[1], bias=False),
                                    norm_layer(inner_planes),
                                    nn.ReLU(inplace=True))
-        self.proj4 = nn.Sequential(nn.Conv2d(inner_planes, proj_dim, kernel_size=1, padding=0, dilation=1, bias=False),
+        self.proj4 = nn.Sequential(nn.Conv2d(inner_planes, inner_planes, kernel_size=1, padding=0, dilation=1, bias=False),
+                                   norm_layer(inner_planes),
+                                   nn.ReLU(inplace=True),
+                                   nn.Conv2d(inner_planes, proj_dim, kernel_size=1, padding=0, dilation=1, bias=False),
                                    norm_layer(proj_dim),
                                    nn.ReLU(inplace=True))
         # 尺度三
@@ -44,7 +50,10 @@ class MEP(nn.Module):
                                    padding=dilations[2], dilation=dilations[2], bias=False),
                                    norm_layer(inner_planes),
                                    nn.ReLU(inplace=True))
-        self.proj5 = nn.Sequential(nn.Conv2d(inner_planes, proj_dim, kernel_size=1, padding=0, dilation=1, bias=False),
+        self.proj5 = nn.Sequential(nn.Conv2d(inner_planes, inner_planes, kernel_size=1, padding=0, dilation=1, bias=False),
+                                   norm_layer(inner_planes),
+                                   nn.ReLU(inplace=True),
+                                   nn.Conv2d(inner_planes, proj_dim, kernel_size=1, padding=0, dilation=1, bias=False),
                                    norm_layer(proj_dim),
                                    nn.ReLU(inplace=True))
 
