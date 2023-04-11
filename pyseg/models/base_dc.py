@@ -60,8 +60,8 @@ class MEP(nn.Module):
         feat3 = self.conv3(x)
         proj3 = self.proj3(feat3)
         feat4 = self.conv4(x)
-        proj4 = self.proj3(feat4)
+        proj4 = self.proj4(feat4)
         feat5 = self.conv5(x)
-        proj5 = self.proj3(feat5)
+        proj5 = self.proj5(feat5)
         aspp_out = torch.cat((feat1, feat2, feat3, feat4, feat5), 1)
         return aspp_out, proj3, proj4, proj5

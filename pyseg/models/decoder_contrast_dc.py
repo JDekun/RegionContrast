@@ -21,20 +21,21 @@ class dec_deeplabv3_contrast_dc(nn.Module):
             nn.Dropout2d(0.1))
         self.final =  nn.Conv2d(256, num_classes, kernel_size=1, stride=1, padding=0, bias=True)
 
-        for i in range(num_classes):
-            self.register_buffer("queue"+str(i),torch.randn(inner_planes,self.queue_len))
-            self.register_buffer("ptr"+str(i),torch.zeros(1,dtype=torch.long))
-            exec("self.queue"+str(i) + '=' + 'nn.functional.normalize(' + "self.queue"+str(i) + ',dim=0)')
+        for j in range(3):
+            for i in range(num_classes):
+                self.register_buffer("queue"+str(j)+str(i),torch.randn(proj_dim, self.queue_len))
+                self.register_buffer("ptr"+str(j)+str(i),torch.zeros(1,dtype=torch.long))
+                exec("self.queue"+str(j)+str(i) + '=' + 'nn.functional.normalize(' + "self.queue"+str(j)+str(i) + ',dim=0)')
            
-    def _dequeue_and_enqueue(self,keys,vals,cat, bs):
+    def _dequeue_and_enqueue(self,keys,vals,cat,n,bs):
         if cat not in vals:
             return
         keys = keys[list(vals).index(cat)]
         batch_size = bs
-        ptr = int(eval("self.ptr"+str(cat)))
-        eval("self.queue"+str(cat))[:,ptr] = keys
+        ptr = int(eval("self.ptr"+str(n)+str(cat)))
+        eval("self.queue"+str(n)+str(cat))[:,ptr] = keys
         ptr = (ptr + batch_size) % self.queue_len
-        eval("self.ptr"+str(cat))[0] = ptr
+        eval("self.ptr"+str(n)+str(cat))[0] = ptr
 
     def construct_region(self, fea, pred):
         bs, dim, _, _ = fea.shape
@@ -62,27 +63,26 @@ class dec_deeplabv3_contrast_dc(nn.Module):
     
 
     def forward(self, x, is_eval = False):
-     
         aspp_out, proj3, proj4, proj5 = self.aspp(x)
         proj = [proj3, proj4, proj5]
-        res = self.final(self.head(aspp_out))
+        out = self.final(self.head(aspp_out))
 
         if not is_eval:
             bs = x.shape[0]
             loss=[]
-            for j in range(len(proj)):
-                fea_origin, res_origin = proj[j], res
+            for j in range(3):
+                projector = proj[j]
 
                 contrast_loss = 0
                 for n in range(bs):
-                    fea, res = fea_origin[n].unsqueeze(0), res_origin[n].unsqueeze(0)
+                    fea, res = projector[n].unsqueeze(0), out[n].unsqueeze(0)
                     keys, vals = self.construct_region(fea, res)  #keys: N,256   vals: N,  N is the category number in this batch
                     keys = nn.functional.normalize(keys,dim=1)
 
                     for cls_ind in range(self.num_classes):
                         if cls_ind in vals:
                             query = keys[list(vals).index(cls_ind)]   #256,
-                            l_pos = query.unsqueeze(1)*eval("self.queue"+str(cls_ind)).clone().detach()  #256, N1
+                            l_pos = query.unsqueeze(1)*eval("self.queue"+str(j)+str(cls_ind)).clone().detach()  #256, N1
                             l_pos = l_pos.mean(0).unsqueeze(0)
                             all_ind = [m for m in range(19)]
                             l_neg = 0
@@ -90,7 +90,7 @@ class dec_deeplabv3_contrast_dc(nn.Module):
                             tmp.remove(cls_ind)
                             i = 0
                             for cls_ind2 in tmp:
-                                temp = query.unsqueeze(1)*eval("self.queue"+str(cls_ind2)).clone().detach() #256, N1
+                                temp = query.unsqueeze(1)*eval("self.queue"+str(j)+str(cls_ind2)).clone().detach() #256, N1
                                 temp = temp.mean(0).unsqueeze(0)
                                 if i !=0:
                                     l_neg = torch.cat((l_neg, temp),dim=0)
@@ -101,7 +101,7 @@ class dec_deeplabv3_contrast_dc(nn.Module):
                         else:
                             continue
                     for i in range(self.num_classes):
-                        self._dequeue_and_enqueue(keys,vals,i, 1)
+                        self._dequeue_and_enqueue(keys,vals,i,n,1)
                 loss.append(contrast_loss/bs)
-            return res_origin, loss[0]+loss[1]+loss[2]
-        return res
+            return out, loss[0]+loss[1]+loss[2]
+        return out
