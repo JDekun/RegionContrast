@@ -51,13 +51,6 @@ class dec_deeplabv3_contrast_dc(nn.Module):
         val = torch.tensor([i for i in val if i<19])
         return new_fea, val.cuda()
 
-    # def _compute_contrast_loss(self, l_pos, l_neg):
-    #     N = l_pos.size(0)
-    #     logits = torch.cat((l_pos,l_neg),dim=1) #256, N1*2
-    #     logits /= self.temperature
-    #     labels = torch.zeros((N,),dtype=torch.long).cuda()
-    #     return self.criterion(logits,labels)
-
     def _compute_contrast_loss(self, l_pos, l_neg):
         N = l_pos.size(1)
         pos_logits = torch.exp(l_pos)

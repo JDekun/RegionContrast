@@ -225,7 +225,7 @@ def train(model, optimizer, lr_scheduler, criterion, data_loader, epoch, scaler)
         #print('rank,reduced_loss',rank,reduced_loss)
         losses.update(reduced_loss.item())
 
-        if i_iter % 50 == 0 and rank==0:
+        if i_iter % round(50/args.batch_size) == 0 and rank==0:
             # iou_class = intersection_meter.sum / (union_meter.sum + 1e-10)
             # accuracy_class = intersection_meter.sum / (target_meter.sum + 1e-10)
             # mIoU = np.mean(iou_class)
