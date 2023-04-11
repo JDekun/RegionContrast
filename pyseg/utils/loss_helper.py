@@ -11,8 +11,7 @@ def get_criterion(cfg):
     ignore_index = cfg['dataset']['ignore_label']
     
     if cfg_criterion['type'] == 'ohem':
-        criterion = CriterionOhem(aux_weight, ignore_index=ignore_index,
-                                  **cfg_criterion['kwargs'])
+        criterion = CriterionOhem(aux_weight, ignore_index=ignore_index, **cfg_criterion['kwargs'])
     else:
         criterion = Criterion(aux_weight, ignore_index=ignore_index, **cfg_criterion['kwargs'])
     return criterion

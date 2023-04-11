@@ -40,7 +40,7 @@ def main():
     global args, cfg
     args = parser.parse_args()
 
-    cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
+    cfg = yaml.load(open("./scripts/"+args.config, 'r'), Loader=yaml.Loader)
 
     cfg['dataset'].update({'batch_size': args.batch_size, 'batch_size_val': args.batch_size_val})
     cfg['trainer'].update({'epochs': args.epochs})
@@ -182,9 +182,12 @@ def train(model, optimizer, lr_scheduler, criterion, data_loader, epoch, scaler)
 
         with torch.cuda.amp.autocast(enabled= scaler is not None):
             preds = model(images, is_eval=False)
-            contrast_loss = preds[-1] / world_size
-            loss = criterion(preds[:-1], labels) / world_size
-            loss += cfg['criterion']['contrast_weight']*contrast_loss
+            if len(preds)>2:
+                contrast_loss = preds[-1] / world_size
+                loss = criterion(preds[:-1], labels) / world_size
+                loss += cfg['criterion']['contrast_weight']*contrast_loss
+            else:
+                loss = criterion(preds[:], labels) / world_size
             
         optimizer.zero_grad()
         if scaler is not None:
@@ -222,7 +225,7 @@ def train(model, optimizer, lr_scheduler, criterion, data_loader, epoch, scaler)
         #print('rank,reduced_loss',rank,reduced_loss)
         losses.update(reduced_loss.item())
 
-        if i_iter % 50 == 0 and rank==0:
+        if i_iter % round(50/args.batch_size) == 0 and rank==0:
             # iou_class = intersection_meter.sum / (union_meter.sum + 1e-10)
             # accuracy_class = intersection_meter.sum / (target_meter.sum + 1e-10)
             # mIoU = np.mean(iou_class)
