@@ -203,9 +203,9 @@ def train(model, optimizer, lr_scheduler, criterion, data_loader, epoch, scaler)
             if len(preds)>2:
                 contrast_loss = preds[-1] / world_size
                 loss = criterion(preds[:-1], labels) / world_size
-                print(loss)
+                print("loss{}\n".format(loss))
                 loss += cfg['criterion']['contrast_weight']*contrast_loss
-                print(loss, contrast_loss)
+                print("sum".format(contrast_loss))
             else:
                 loss = criterion(preds[:], labels) / world_size
             
