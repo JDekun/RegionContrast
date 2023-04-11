@@ -71,7 +71,7 @@ class dec_deeplabv3_contrast_dc(nn.Module):
         if not is_eval:
             bs = x.shape[0]
             loss=[]
-            for j in range(len(proj)):
+            for j in range(3):
                 fea_origin, res_origin = proj[j], res
 
                 contrast_loss = 0
