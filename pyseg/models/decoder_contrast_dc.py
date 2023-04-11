@@ -66,6 +66,7 @@ class dec_deeplabv3_contrast_dc(nn.Module):
         aspp_out, proj3, proj4, proj5 = self.aspp(x)
         proj = [proj3, proj4, proj5]
         out = self.final(self.head(aspp_out))
+        tegart = out.clone()
 
         if not is_eval:
             bs = x.shape[0]
@@ -75,7 +76,7 @@ class dec_deeplabv3_contrast_dc(nn.Module):
 
                 contrast_loss = 0
                 for bi in range(bs):
-                    fea, res = projector[bi].unsqueeze(0), out[bi].unsqueeze(0)
+                    fea, res = projector[bi].unsqueeze(0), tegart[bi].unsqueeze(0)
                     keys, vals = self.construct_region(fea, res)  #keys: N,256   vals: N,  N is the category number in this batch
                     keys = nn.functional.normalize(keys,dim=1)
 
