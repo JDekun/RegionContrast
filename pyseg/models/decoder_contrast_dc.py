@@ -63,7 +63,6 @@ class dec_deeplabv3_contrast_dc(nn.Module):
     
 
     def forward(self, x, is_eval = False):
-     
         aspp_out, proj3, proj4, proj5 = self.aspp(x)
         proj = [proj3, proj4, proj5]
         out = self.final(self.head(aspp_out))
@@ -72,13 +71,11 @@ class dec_deeplabv3_contrast_dc(nn.Module):
             bs = x.shape[0]
             loss=[]
             for j in range(3):
-                fea_origin = proj[j]
+                projector = proj[j]
 
                 contrast_loss = 0
                 for n in range(bs):
-                    print("fea_origin", fea_origin.shape)
-                    print("n", n)
-                    fea, res = fea_origin[n].unsqueeze(0), out[n].unsqueeze(0)
+                    fea, res = projector[n].unsqueeze(0), out[n].unsqueeze(0)
                     keys, vals = self.construct_region(fea, res)  #keys: N,256   vals: N,  N is the category number in this batch
                     keys = nn.functional.normalize(keys,dim=1)
 
