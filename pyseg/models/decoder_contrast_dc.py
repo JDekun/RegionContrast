@@ -70,19 +70,19 @@ class dec_deeplabv3_contrast_dc(nn.Module):
         if not is_eval:
             bs = x.shape[0]
             loss=[]
-            for j in range(3):
-                projector = proj[j]
+            for pi in range(len(proj)):
+                projector = proj[pi]
 
                 contrast_loss = 0
-                for n in range(bs):
-                    fea, res = projector[n].unsqueeze(0), out[n].unsqueeze(0)
+                for bi in range(bs):
+                    fea, res = projector[bi].unsqueeze(0), out[bi].unsqueeze(0)
                     keys, vals = self.construct_region(fea, res)  #keys: N,256   vals: N,  N is the category number in this batch
                     keys = nn.functional.normalize(keys,dim=1)
 
                     for cls_ind in range(self.num_classes):
                         if cls_ind in vals:
                             query = keys[list(vals).index(cls_ind)]   #256,
-                            l_pos = query.unsqueeze(1)*eval("self.queue"+str(j)+str(cls_ind)).clone().detach()  #256, N1
+                            l_pos = query.unsqueeze(1)*eval("self.queue"+str(pi)+str(cls_ind)).clone().detach()  #256, N1
                             l_pos = l_pos.mean(0).unsqueeze(0)
                             all_ind = [m for m in range(19)]
                             l_neg = 0
@@ -90,7 +90,7 @@ class dec_deeplabv3_contrast_dc(nn.Module):
                             tmp.remove(cls_ind)
                             i = 0
                             for cls_ind2 in tmp:
-                                temp = query.unsqueeze(1)*eval("self.queue"+str(j)+str(cls_ind2)).clone().detach() #256, N1
+                                temp = query.unsqueeze(1)*eval("self.queue"+str(pi)+str(cls_ind2)).clone().detach() #256, N1
                                 temp = temp.mean(0).unsqueeze(0)
                                 if i !=0:
                                     l_neg = torch.cat((l_neg, temp),dim=0)
@@ -101,7 +101,8 @@ class dec_deeplabv3_contrast_dc(nn.Module):
                         else:
                             continue
                     for i in range(self.num_classes):
-                        self._dequeue_and_enqueue(keys,vals,i,j,1)
+                        self._dequeue_and_enqueue(keys,vals,i,pi,1)
                 loss.append(contrast_loss/bs)
+            print(loss[0]+loss[1]+loss[2])
             return out, loss[0]+loss[1]+loss[2]
         return out
