@@ -101,7 +101,7 @@ class dec_deeplabv3_contrast_dc(nn.Module):
                         else:
                             continue
                     for i in range(self.num_classes):
-                        self._dequeue_and_enqueue(keys,vals,i,n,1)
+                        self._dequeue_and_enqueue(keys,vals,i,j,1)
                 loss.append(contrast_loss/bs)
             return out, loss[0]+loss[1]+loss[2]
         return out
