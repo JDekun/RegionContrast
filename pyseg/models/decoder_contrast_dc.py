@@ -64,14 +64,13 @@ class dec_deeplabv3_contrast_dc(nn.Module):
     def forward(self, x, is_eval = False):
      
         aspp_out, proj3, proj4, proj5 = self.aspp(x)
+        print(proj3.shape)
         proj = [proj3, proj4, proj5]
         res = self.final(self.head(aspp_out))
 
         if not is_eval:
             bs = x.shape[0]
             loss=[]
-            print("bs",bs)
-            print("len",len(proj))
             for j in range(len(proj)):
                 fea_origin, res_origin = proj[j], res
 
