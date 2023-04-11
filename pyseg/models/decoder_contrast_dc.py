@@ -37,11 +37,11 @@ class dec_deeplabv3_contrast_dc(nn.Module):
         eval("self.ptr"+str(cat))[0] = ptr
 
     def construct_region(self, fea, pred):
-        bs = fea.shape[0]
+        bs, dim, _, _ = fea.shape
         pred = pred.max(1)[1].squeeze().view(bs, -1)  
         val = torch.unique(pred)
         fea=fea.squeeze()
-        fea = fea.view(bs, 256,-1).permute(1,0,2) 
+        fea = fea.view(bs, dim, -1).permute(1,0,2) 
     
         new_fea = fea[:,pred==val[0]].mean(1).unsqueeze(0) 
         for i in val[1:]:
@@ -64,7 +64,6 @@ class dec_deeplabv3_contrast_dc(nn.Module):
     def forward(self, x, is_eval = False):
      
         aspp_out, proj3, proj4, proj5 = self.aspp(x)
-        print(proj3.shape)
         proj = [proj3, proj4, proj5]
         res = self.final(self.head(aspp_out))
 
