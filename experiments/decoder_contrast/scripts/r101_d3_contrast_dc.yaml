@@ -66,4 +66,5 @@ net: # Required.
     kwargs:
       inner_planes: 256
       dilations: [12, 24, 36]
+      proj_dim: 128
       
