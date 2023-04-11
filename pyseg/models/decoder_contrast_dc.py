@@ -66,19 +66,19 @@ class dec_deeplabv3_contrast_dc(nn.Module):
      
         aspp_out, proj3, proj4, proj5 = self.aspp(x)
         proj = [proj3, proj4, proj5]
-        res = self.final(self.head(aspp_out))
+        out = self.final(self.head(aspp_out))
 
         if not is_eval:
             bs = x.shape[0]
             loss=[]
             for j in range(3):
-                fea_origin, res_origin = proj[j], res
+                fea_origin = proj[j]
 
                 contrast_loss = 0
                 for n in range(bs):
                     print("fea_origin", fea_origin.shape)
                     print("n", n)
-                    fea, res = fea_origin[n].unsqueeze(0), res_origin[n].unsqueeze(0)
+                    fea, res = fea_origin[n].unsqueeze(0), out[n].unsqueeze(0)
                     keys, vals = self.construct_region(fea, res)  #keys: N,256   vals: N,  N is the category number in this batch
                     keys = nn.functional.normalize(keys,dim=1)
 
@@ -106,5 +106,5 @@ class dec_deeplabv3_contrast_dc(nn.Module):
                     for i in range(self.num_classes):
                         self._dequeue_and_enqueue(keys,vals,i,n,1)
                 loss.append(contrast_loss/bs)
-            return res_origin, loss[0]+loss[1]+loss[2]
-        return res
+            return out, loss[0]+loss[1]+loss[2]
+        return out
