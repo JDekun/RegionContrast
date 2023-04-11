@@ -203,9 +203,8 @@ def train(model, optimizer, lr_scheduler, criterion, data_loader, epoch, scaler)
             if len(preds)>2:
                 contrast_loss = preds[-1] / world_size
                 loss = criterion(preds[:-1], labels) / world_size
-                print("loss{}\n".format(loss))
+                print("loss{}=={}\n".format(world_size,loss))
                 loss += cfg['criterion']['contrast_weight']*contrast_loss
-                print("sum{}\n".format(contrast_loss))
             else:
                 loss = criterion(preds[:], labels) / world_size
             
@@ -240,10 +239,10 @@ def train(model, optimizer, lr_scheduler, criterion, data_loader, epoch, scaler)
         # target_meter.update(reduced_target.cpu().numpy())
 
         # gather all loss from different gpus
-        reduced_loss = loss.clone()
-        dist.all_reduce(reduced_loss)
-        #print('rank,reduced_loss',rank,reduced_loss)
-        losses.update(reduced_loss.item())
+        # reduced_loss = loss.clone()
+        # dist.all_reduce(reduced_loss)
+        # #print('rank,reduced_loss',rank,reduced_loss)
+        losses.update(loss.item())
 
         if i_iter % round(50/args.batch_size) == 0 and rank==0:
             # iou_class = intersection_meter.sum / (union_meter.sum + 1e-10)
