@@ -43,7 +43,7 @@ saver:
   pretrain: ''
 
 criterion:
-  type: ohem
+  type: ce
   contrast_weight: 0.1
   kwargs:
     thresh: 0.7
