@@ -154,8 +154,7 @@ class ResNet(nn.Module):
             self.bn1 = norm_layer(self.inplanes)
             self.relu = nn.ReLU(inplace=True)
         else:
-            self.inplanes = 128
-            
+            self.inplanes = 128          
             self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=2, padding=1, bias=False)
             self.bn1 = norm_layer(64)
             self.relu1 = nn.ReLU(inplace=False)
