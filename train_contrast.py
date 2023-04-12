@@ -131,7 +131,7 @@ def main():
 
         missing_keys, unexpected_keys = model.load_state_dict(checkpoint['model_state'])
         optimizer.load_state_dict(checkpoint['optimizer_state'])
-        lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
+
         start_epoch = checkpoint['epoch'] + 1
         # if not args.run_id and ('run_id' in checkpoint.keys()):
         #     args.run_id = checkpoint['run_id']
@@ -159,8 +159,7 @@ def main():
                     best_prec = prec
                     state = {'epoch': epoch,
                          'model_state': model.state_dict(),
-                         'optimizer_state': optimizer.state_dict(),
-                         'lr_scheduler': lr_scheduler.state_dict()}
+                         'optimizer_state': optimizer.state_dict()}
                     if args.amp:
                         state["scaler"] = scaler.state_dict()
                     torch.save(state, osp.join(save_dir, 'best.pth'))
